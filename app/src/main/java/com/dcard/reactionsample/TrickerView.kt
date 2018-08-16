@@ -11,8 +11,15 @@ class TrickerView @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    var currentStatue = 0
+
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         return super.onTouchEvent(event)
+    }
+
+    val longPressCheck = Runnable {
+
     }
 
 }
