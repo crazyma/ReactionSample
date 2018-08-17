@@ -33,16 +33,6 @@ class RootView @JvmOverloads constructor(
 
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-//        Log.d("badu","the parent of RootView : " + parent)
-//        if(parent is CustomConstraintLayout){
-//            postDelayed({
-//                parent.requestDisallowInterceptTouchEvent(true)
-//            },500)
-//        }
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
 

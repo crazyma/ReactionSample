@@ -3,13 +3,9 @@ package com.dcard.reactionsample
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.constraint.ConstraintLayout
 import android.support.constraint.ConstraintSet
 import android.support.v4.view.ViewCompat
 import android.util.Log
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewConfiguration
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -29,10 +25,6 @@ class MainActivity : AppCompatActivity() {
 
             true
         }
-    }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        return super.onTouchEvent(event)
     }
 
     private fun addReactionView(){
