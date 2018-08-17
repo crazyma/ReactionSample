@@ -4,8 +4,12 @@ import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.constraint.ConstraintLayout
+import android.support.constraint.ConstraintSet
+import android.support.v4.view.ViewCompat
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -18,17 +22,36 @@ class MainActivity : AppCompatActivity() {
         button.setOnLongClickListener {
             Log.d("badu", "x :" + it.x + " y :" + it.y)
             addReactionView()
+
+            it.post {
+                rootLayout.interruptingTouchEvent = true
+            }
+
             true
         }
     }
 
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        return super.onTouchEvent(event)
+    }
+
     private fun addReactionView(){
-        val view = View(this).apply {
+        val view = RootView(this).apply {
             this.setBackgroundColor(Color.GREEN)
+            id = R.id.id_root_view
         }
+        ViewCompat.setElevation(view, 32f)
+        rootLayout.addView(view)
 
-        val params = ConstraintLayout.LayoutParams(200,200)
+        val set = ConstraintSet()
+        set.clone(rootLayout)
+        set.connect(view.id, ConstraintSet.START, R.id.button, ConstraintSet.START, 0)
+        set.connect(view.id, ConstraintSet.TOP, R.id.button, ConstraintSet.TOP, 0)
+        set.constrainWidth(view.id, 600)
+        set.constrainHeight(view.id, 600)
 
-        rootLayout.addView(view, params)
+        set.applyTo(rootLayout)
+
+        rootLayout.customTouchEventListener = view
     }
 }

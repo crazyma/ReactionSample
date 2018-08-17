@@ -11,7 +11,7 @@ class RootView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
+) : View(context, attrs, defStyleAttr), CustomConstraintLayout.CustomTouchEventListener {
 
     var reactionCount = 5
     var bottomPosition = 0
@@ -33,6 +33,16 @@ class RootView @JvmOverloads constructor(
 
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+//        Log.d("badu","the parent of RootView : " + parent)
+//        if(parent is CustomConstraintLayout){
+//            postDelayed({
+//                parent.requestDisallowInterceptTouchEvent(true)
+//            },500)
+//        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
@@ -41,9 +51,13 @@ class RootView @JvmOverloads constructor(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                parent.requestDisallowInterceptTouchEvent(true)
                 Log.d("badu", "[DOWN] x: $x, y: $y | area : " + recognizePosition(x,y))
             }
             MotionEvent.ACTION_MOVE -> {
+                if(parent is CustomConstraintLayout){
+                    parent.requestDisallowInterceptTouchEvent(true)
+                }
                 Log.d("badu", "[MOVE] x: $x, y: $y | area : " + recognizePosition(x,y))
             }
             MotionEvent.ACTION_UP -> {
@@ -53,6 +67,27 @@ class RootView @JvmOverloads constructor(
         }
 
         return true
+    }
+
+    override fun onHandleTouchEvent(event: MotionEvent) {
+        val x = event.x.toInt() - x.toInt()
+        val y = event.y.toInt() - y.toInt()
+
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                parent.requestDisallowInterceptTouchEvent(true)
+                Log.d("badu", "[onHandleTouchEvent DOWN] x: $x, y: $y | area : " + recognizePosition(x,y))
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if(parent is CustomConstraintLayout){
+                    parent.requestDisallowInterceptTouchEvent(true)
+                }
+                Log.d("badu", "[onHandleTouchEvent MOVE] x: $x, y: $y | area : " + recognizePosition(x,y))
+            }
+            MotionEvent.ACTION_UP -> {
+                Log.d("badu", "[onHandleTouchEvent UP] x: $x, y: $y | area : " + recognizePosition(x,y))
+            }
+        }
     }
 
     override fun performClick(): Boolean {
