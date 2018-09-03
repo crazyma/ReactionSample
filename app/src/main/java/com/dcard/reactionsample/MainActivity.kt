@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = RecyclerViewAdapter(this).apply {
             clickTask = { view, viewGroup ->
-                view.getLocationOnScreen()
+//                view.getLocationOnScreen()
                 Log.d("badu", "view view " + view.x.toInt() + " " + (view.y + viewGroup.y).toInt() + " " + view.width + " " + view.height)
                 rootLayout.showReactionView(view.x.toInt(), (view.y + viewGroup.y).toInt(), view.width, view.height)
             }
