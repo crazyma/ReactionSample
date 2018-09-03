@@ -27,11 +27,17 @@ class MainActivity : AppCompatActivity() {
                 val intArray = IntArray(2)
                 view.getLocationOnScreen(intArray)
 
+                val rootIntArray = IntArray(2)
+                rootLayout.getLocationOnScreen(rootIntArray)
 
-                Log.i("badu", "view location on screen : " + intArray[0] + ", " + intArray[1])
+                val offsetTopByRootView = intArray[1] - rootIntArray[1]
+
+
+                Log.i("badu", "view location on screen : " + intArray[0] + ", " + offsetTopByRootView)
 
                 Log.d("badu", "view view " + view.x.toInt() + " " + (view.y + viewGroup.y).toInt() + " " + view.width + " " + view.height)
                 rootLayout.showReactionView(view.x.toInt(), (view.y + viewGroup.y).toInt(), view.width, view.height)
+                rootLayout.interruptingTouchEvent = true
             }
         }
     }
@@ -39,10 +45,21 @@ class MainActivity : AppCompatActivity() {
     fun buttonClicked(v: View) {
         val it = v
         Log.d("badu", "x :" + it.x + " y :" + it.y)
+
+        val intArray = IntArray(2)
+        v.getLocationOnScreen(intArray)
+
+        val rootIntArray = IntArray(2)
+        rootLayout.getLocationOnScreen(rootIntArray)
+
+        val offsetTopByRootView = intArray[1] - rootIntArray[1]
+
+        Log.d("badu", " intArrayx :" + intArray[0] + " y :" + intArray[1])
+
         if (rootLayout.isReactionViewShowing()) {
             rootLayout.hideReactionView()
         } else {
-            rootLayout.showReactionView(it.x.toInt(), it.y.toInt(), it.width, it.height)
+            rootLayout.showReactionView(intArray[0], offsetTopByRootView, it.width, it.height)
         }
 
         it.post {
