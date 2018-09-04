@@ -25,7 +25,7 @@ class CustomFrameLayout @JvmOverloads constructor(
     var reactionTopBound = 0
     var reactionWidth = 0
     var reactionHeight = 0
-    var reactionView: View? = null
+    var reactionView: RootView? = null
 
     init {
         reactionWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
@@ -69,6 +69,7 @@ class CustomFrameLayout @JvmOverloads constructor(
 
 
         addView(reactionView, createParams(touchX, touchY, childWidth, childHeight))
+        customTouchEventListener = reactionView
     }
 
     private fun createParams(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) =

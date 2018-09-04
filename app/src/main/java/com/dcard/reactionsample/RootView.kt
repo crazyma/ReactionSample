@@ -11,7 +11,7 @@ class RootView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), CustomConstraintLayout.CustomTouchEventListener {
+) : View(context, attrs, defStyleAttr), CustomFrameLayout.CustomTouchEventListener {
 
     var reactionCount = 5
     var bottomPosition = 0
@@ -65,13 +65,13 @@ class RootView @JvmOverloads constructor(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                parent.requestDisallowInterceptTouchEvent(true)
+//                parent.requestDisallowInterceptTouchEvent(true)
                 Log.d("badu", "[onHandleTouchEvent DOWN] x: $x, y: $y | area : " + recognizePosition(x,y))
             }
             MotionEvent.ACTION_MOVE -> {
-                if(parent is CustomConstraintLayout){
-                    parent.requestDisallowInterceptTouchEvent(true)
-                }
+//                if(parent is CustomConstraintLayout){
+//                    parent.requestDisallowInterceptTouchEvent(true)
+//                }
                 Log.d("badu", "[onHandleTouchEvent MOVE] x: $x, y: $y | area : " + recognizePosition(x,y))
             }
             MotionEvent.ACTION_UP -> {
