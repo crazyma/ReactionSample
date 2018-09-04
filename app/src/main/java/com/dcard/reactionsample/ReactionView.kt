@@ -7,11 +7,11 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
-class RootView @JvmOverloads constructor(
+class ReactionView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), CustomFrameLayout.CustomTouchEventListener {
+) : View(context, attrs, defStyleAttr), ReactionBaseLayout.CustomTouchEventListener {
 
     var reactionCount = 5
     var bottomPosition = 0
