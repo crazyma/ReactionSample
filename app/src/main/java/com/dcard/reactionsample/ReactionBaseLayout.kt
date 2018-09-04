@@ -6,10 +6,9 @@ import android.graphics.Color
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.View
 import android.widget.FrameLayout
 
-class CustomFrameLayout @JvmOverloads constructor(
+class ReactionBaseLayout @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
@@ -25,7 +24,7 @@ class CustomFrameLayout @JvmOverloads constructor(
     var reactionTopBound = 0
     var reactionWidth = 0
     var reactionHeight = 0
-    var reactionView: RootView? = null
+    var reactionView: ReactionView? = null
 
     init {
         reactionWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
@@ -61,15 +60,15 @@ class CustomFrameLayout @JvmOverloads constructor(
         if (reactionView != null)
             return
 
-        reactionView = RootView(context).apply {
+        reactionView = ReactionView(context).apply {
             this.setBackgroundColor(Color.GREEN)
             id = R.id.id_root_view
             ViewCompat.setElevation(this, 32f)
         }
 
-
         addView(reactionView, createParams(touchX, touchY, childWidth, childHeight))
         customTouchEventListener = reactionView
+        interruptingTouchEvent = true
     }
 
     private fun createParams(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) =
