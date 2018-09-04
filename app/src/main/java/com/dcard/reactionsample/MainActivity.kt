@@ -36,8 +36,12 @@ class MainActivity : AppCompatActivity() {
                 Log.i("badu", "view location on screen : " + intArray[0] + ", " + offsetTopByRootView)
 
                 Log.d("badu", "view view " + view.x.toInt() + " " + (view.y + viewGroup.y).toInt() + " " + view.width + " " + view.height)
-                rootLayout.showReactionView(view.x.toInt(), (view.y + viewGroup.y).toInt(), view.width, view.height)
-                rootLayout.interruptingTouchEvent = true
+
+                view.post {
+                    rootLayout.showReactionView(view.x.toInt(), (view.y + viewGroup.y).toInt(), view.width, view.height)
+                    rootLayout.interruptingTouchEvent = true
+                }
+
             }
         }
     }
