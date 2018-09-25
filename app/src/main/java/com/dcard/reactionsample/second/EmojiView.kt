@@ -1,11 +1,14 @@
 package com.dcard.reactionsample.second
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.LinearInterpolator
 import com.dcard.reactionsample.R
 
 /**
@@ -17,7 +20,7 @@ class EmojiView @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    var hoverIndex = 0
+    var hoverIndex = -1
 
     var originalSize = 0
     var biggerSize = 0
@@ -32,6 +35,8 @@ class EmojiView @JvmOverloads constructor(
     val xBoundList = mutableListOf<Int>()
     val yBoundList = mutableListOf<Int>()
     val emojiList = mutableListOf<Emoji>()
+
+    var animator: ValueAnimator? = null
 
     init {
         xBoundList.add(originalSize)
@@ -81,39 +86,35 @@ class EmojiView @JvmOverloads constructor(
                         x <= originalSize -> {
                             if (hoverIndex != 0) {
                                 hoverIndex = 0
-                                modifyBounding(hoverIndex)
-                                invalidate()
+                                createSelectedAnimator(hoverIndex)
                             }
                         }
                         x <= originalSize * 2 -> {
                             if (hoverIndex != 1) {
                                 hoverIndex = 1
-                                modifyBounding(hoverIndex)
-                                invalidate()
+                                createSelectedAnimator(hoverIndex)
                             }
                         }
                         x <= originalSize * 3 -> {
                             if (hoverIndex != 2) {
                                 hoverIndex = 2
-                                modifyBounding(hoverIndex)
-                                invalidate()
+                                createSelectedAnimator(hoverIndex)
                             }
                         }
                         x <= originalSize * 4 -> {
                             if (hoverIndex != 3) {
                                 hoverIndex = 3
-                                modifyBounding(hoverIndex)
-                                invalidate()
+                                createSelectedAnimator(hoverIndex)
                             }
                         }
                         x <= width -> {
                             if (hoverIndex != 4) {
                                 hoverIndex = 4
-                                modifyBounding(hoverIndex)
-                                invalidate()
+                                createSelectedAnimator(hoverIndex)
                             }
                         }
                         else -> {
+                            Log.d("badu", "11111")
                             if (hoverIndex != -1) {
                                 hoverIndex = -1
                                 modifyBounding(-1)
@@ -123,6 +124,7 @@ class EmojiView @JvmOverloads constructor(
                     }
                 } else {
                     if (hoverIndex != -1) {
+                        Log.d("badu", "2222")
                         hoverIndex = -1
                         modifyBounding(-1)
                         invalidate()
@@ -160,6 +162,82 @@ class EmojiView @JvmOverloads constructor(
             }
         }
 
+    }
+
+    private fun createSelectedAnimator(hoverIndex: Int) {
+
+        if (hoverIndex < 0 || hoverIndex > emojiList.size) return
+
+        for (i in 0 until emojiList.size) {
+            emojiList[i].beginSize = emojiList[i].currentSize
+
+            if (i == hoverIndex) {
+                emojiList[i].endSize = biggerSize
+            } else {
+                emojiList[i].endSize = smallerSize
+            }
+        }
+
+        if (animator != null && animator!!.isRunning) {
+            animator!!.cancel()
+        }
+
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 100
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+
+                calculateAllSize(value)
+
+                postInvalidate()
+            }
+        }.apply { start() }
+
+    }
+
+    private fun calculateAllSize(interpolatedValue: Float) {
+        var totalX = 0
+        for (i in 0 until emojiList.size) {
+            emojiList[i].currentSize = getAnimatedSize(i, interpolatedValue)
+            emojiList[i].currentY = height - emojiList[i].currentSize
+            emojiList[i].currentX = totalX
+        }
+
+        calculateCoordinateX()
+    }
+
+    private fun getAnimatedSize(position: Int, interpolatedValue: Float): Int {
+        val changeSize = emojiList[position].endSize - emojiList[position].beginSize
+        return emojiList[position].beginSize + (interpolatedValue * changeSize).toInt()
+    }
+
+    private fun calculateCoordinateX() {
+        emojiList[0].currentX = 0
+        emojiList.last().currentX = width - emojiList.last().currentSize
+
+        for (i in 1 until hoverIndex) {
+            emojiList[i].currentX = emojiList[i - 1].currentX + emojiList[i - 1].currentSize
+        }
+
+        for (i in emojiList.size - 2 downTo hoverIndex + 1) {
+            emojiList[i].currentX = emojiList[i + 1].currentX - emojiList[i].currentSize
+        }
+
+        if (hoverIndex != 0 && hoverIndex != emojiList.size - 1) {
+            if (hoverIndex <= (emojiList.size / 2 - 1)) {
+                emojiList[hoverIndex].currentX = emojiList[hoverIndex - 1].currentX + emojiList[hoverIndex - 1].currentSize
+            } else {
+                emojiList[hoverIndex].currentX = emojiList[hoverIndex + 1].currentX - emojiList[hoverIndex].currentSize
+            }
+        }
+    }
+
+    private fun createNormalAnimator() {
+        for (i in 0 until emojiList.size) {
+            emojiList[i].beginSize = emojiList[i].currentSize
+            emojiList[i].endSize = originalSize
+        }
     }
 
 }
