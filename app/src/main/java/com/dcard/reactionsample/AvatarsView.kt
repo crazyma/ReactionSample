@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
@@ -14,7 +13,7 @@ class AvatarsView @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    var flag = 0
+    var hoverIndex = 0
 
     var originalSize = 0
     var biggerSize = 0
@@ -80,51 +79,51 @@ class AvatarsView @JvmOverloads constructor(
                 if (y in 0..height) {
                     when {
                         x <= originalSize -> {
-                            if (flag != 0) {
-                                flag = 0
-                                modifyBounding(flag)
+                            if (hoverIndex != 0) {
+                                hoverIndex = 0
+                                modifyBounding(hoverIndex)
                                 invalidate()
                             }
                         }
                         x <= originalSize * 2 -> {
-                            if (flag != 1) {
-                                flag = 1
-                                modifyBounding(flag)
+                            if (hoverIndex != 1) {
+                                hoverIndex = 1
+                                modifyBounding(hoverIndex)
                                 invalidate()
                             }
                         }
                         x <= originalSize * 3 -> {
-                            if (flag != 2) {
-                                flag = 2
-                                modifyBounding(flag)
+                            if (hoverIndex != 2) {
+                                hoverIndex = 2
+                                modifyBounding(hoverIndex)
                                 invalidate()
                             }
                         }
                         x <= originalSize * 4 -> {
-                            if (flag != 3) {
-                                flag = 3
-                                modifyBounding(flag)
+                            if (hoverIndex != 3) {
+                                hoverIndex = 3
+                                modifyBounding(hoverIndex)
                                 invalidate()
                             }
                         }
                         x <= width -> {
-                            if (flag != 4) {
-                                flag = 4
-                                modifyBounding(flag)
+                            if (hoverIndex != 4) {
+                                hoverIndex = 4
+                                modifyBounding(hoverIndex)
                                 invalidate()
                             }
                         }
                         else -> {
-                            if (flag != -1) {
-                                flag = -1
+                            if (hoverIndex != -1) {
+                                hoverIndex = -1
                                 modifyBounding(-1)
                                 invalidate()
                             }
                         }
                     }
                 } else {
-                    if (flag != -1) {
-                        flag = -1
+                    if (hoverIndex != -1) {
+                        hoverIndex = -1
                         modifyBounding(-1)
                         invalidate()
                     }
@@ -135,9 +134,9 @@ class AvatarsView @JvmOverloads constructor(
         return true
     }
 
-    private fun modifyBounding(flag: Int){
-        modifyYBounding(flag)
-        modifyXBounding(flag)
+    private fun modifyBounding(hoverIndex: Int){
+        modifyYBounding(hoverIndex)
+        modifyXBounding(hoverIndex)
     }
 
     private fun modifyXBounding(flag: Int) {
