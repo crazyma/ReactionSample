@@ -76,8 +76,7 @@ class EmojiView @JvmOverloads constructor(
         when (event.action) {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 hoverIndex = -1
-                modifyBounding(-1)
-                invalidate()
+                createNormalAnimator()
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -117,8 +116,7 @@ class EmojiView @JvmOverloads constructor(
                             Log.d("badu", "11111")
                             if (hoverIndex != -1) {
                                 hoverIndex = -1
-                                modifyBounding(-1)
-                                invalidate()
+                                createNormalAnimator()
                             }
                         }
                     }
@@ -126,8 +124,7 @@ class EmojiView @JvmOverloads constructor(
                     if (hoverIndex != -1) {
                         Log.d("badu", "2222")
                         hoverIndex = -1
-                        modifyBounding(-1)
-                        invalidate()
+                        createNormalAnimator()
                     }
                 }
             }
@@ -224,7 +221,8 @@ class EmojiView @JvmOverloads constructor(
             emojiList[i].currentX = emojiList[i + 1].currentX - emojiList[i].currentSize
         }
 
-        if (hoverIndex != 0 && hoverIndex != emojiList.size - 1) {
+
+        if (hoverIndex > 0 && hoverIndex != emojiList.size - 1) {
             if (hoverIndex <= (emojiList.size / 2 - 1)) {
                 emojiList[hoverIndex].currentX = emojiList[hoverIndex - 1].currentX + emojiList[hoverIndex - 1].currentSize
             } else {
@@ -234,10 +232,27 @@ class EmojiView @JvmOverloads constructor(
     }
 
     private fun createNormalAnimator() {
+
         for (i in 0 until emojiList.size) {
             emojiList[i].beginSize = emojiList[i].currentSize
             emojiList[i].endSize = originalSize
         }
+
+        if (animator != null && animator!!.isRunning) {
+            animator!!.cancel()
+        }
+
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 100
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+
+                calculateAllSize(value)
+
+                postInvalidate()
+            }
+        }.apply { start() }
     }
 
 }
