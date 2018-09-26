@@ -7,6 +7,7 @@ import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.FrameLayout
+import com.dcard.reactionsample.second.EmojiView
 
 class ReactionBaseLayout @JvmOverloads constructor(
         context: Context,
@@ -24,7 +25,8 @@ class ReactionBaseLayout @JvmOverloads constructor(
     var reactionTopBound = 0
     var reactionWidth = 0
     var reactionHeight = 0
-    var reactionView: ReactionView? = null
+//    var reactionView: ReactionView? = null
+    var emojiView: EmojiView? = null
 
     init {
         reactionWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
@@ -51,23 +53,24 @@ class ReactionBaseLayout @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
+        //  pass
         customTouchEventListener?.onHandleTouchEvent(event)
 
         return true
     }
 
     fun showReactionView(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) {
-        if (reactionView != null)
+        if (emojiView != null)
             return
 
-        reactionView = ReactionView(context).apply {
+        emojiView = EmojiView(context).apply {
             this.setBackgroundColor(Color.GREEN)
             id = R.id.id_root_view
             ViewCompat.setElevation(this, 32f)
         }
 
-        addView(reactionView, createParams(touchX, touchY, childWidth, childHeight))
-        customTouchEventListener = reactionView
+        addView(emojiView, createParams(touchX, touchY, childWidth, childHeight))
+        customTouchEventListener = emojiView
         interruptingTouchEvent = true
     }
 
@@ -101,12 +104,12 @@ class ReactionBaseLayout @JvmOverloads constructor(
             }
 
     fun hideReactionView() {
-        if (reactionView == null)
+        if (emojiView == null)
             return
 
-        removeView(reactionView)
-        reactionView = null
+        removeView(emojiView)
+        emojiView = null
     }
 
-    fun isReactionViewShowing() = reactionView != null
+    fun isReactionViewShowing() = emojiView != null
 }

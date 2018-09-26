@@ -10,6 +10,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
 import com.dcard.reactionsample.R
+import com.dcard.reactionsample.ReactionBaseLayout
 
 /**
  * Base on [AvatarsView]
@@ -18,7 +19,7 @@ class EmojiView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
+) : View(context, attrs, defStyleAttr), ReactionBaseLayout.CustomTouchEventListener {
 
     companion object {
         private const val HOVER_INDEX_NONE = -1
@@ -102,6 +103,36 @@ class EmojiView @JvmOverloads constructor(
         }
 
         return true
+    }
+
+    override fun onHandleTouchEvent(event: MotionEvent) {
+        val x = event.x.toInt() - x.toInt()
+        val y = event.y.toInt() - y.toInt()
+
+        when (event.action) {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                select(HOVER_INDEX_NONE)
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (x in 0..width && y in 0..height) {
+
+                    for (i in 0 until reactionCount) {
+                        if (x <= normalSize * (i + 1)) {
+                            if (hoverIndex != i) {
+                                select(i)
+                            }
+                            break
+                        }
+                    }
+
+                } else {
+                    if (hoverIndex != HOVER_INDEX_NONE) {
+                        select(HOVER_INDEX_NONE)
+                    }
+                }
+            }
+        }
     }
 
     private fun select(index: Int) {

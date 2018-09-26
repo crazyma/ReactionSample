@@ -36,6 +36,8 @@ class ReactionView @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
+        Log.d("badu","QQQQQQQQQQQQQ")
+
         val x = event.x.toInt()
         val y = event.y.toInt()
 
