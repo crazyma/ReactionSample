@@ -8,7 +8,6 @@ import android.content.Context
 import android.graphics.Color
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import com.dcard.reactionsample.second.EmojiView
@@ -29,7 +28,6 @@ class ReactionBaseLayout @JvmOverloads constructor(
     var reactionTopBound = 0
     var reactionWidth = 0
     var reactionHeight = 0
-//    var reactionView: ReactionView? = null
     var emojiView: EmojiView? = null
 
     init {
@@ -57,39 +55,78 @@ class ReactionBaseLayout @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
-        //  pass
-        customTouchEventListener?.onHandleTouchEvent(event)
+        when (event.action) {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                hideReactionView()
+            }
+
+            else -> {
+                customTouchEventListener?.onHandleTouchEvent(event)
+            }
+        }
 
         return true
     }
 
     fun showReactionView(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) {
-        if (emojiView != null)
-            return
+        if (emojiView != null) {
+            emojiView!!.layoutParams = createParams(touchX, touchY, childWidth, childHeight)
+        } else {
+            emojiView = EmojiView(context).apply {
+                this.setBackgroundColor(Color.GREEN)
+                alpha = 0f
+                id = R.id.id_root_view
+                ViewCompat.setElevation(this, 32f)
+            }
 
-        emojiView = EmojiView(context).apply {
-            this.setBackgroundColor(Color.GREEN)
-            id = R.id.id_root_view
-            ViewCompat.setElevation(this, 32f)
+            addView(emojiView, createParams(touchX, touchY, childWidth, childHeight))
+            customTouchEventListener = emojiView
         }
 
-        addView(emojiView, createParams(touchX, touchY, childWidth, childHeight))
-        customTouchEventListener = emojiView
+        runEntryAnim()
+    }
 
-        val anim1 = ObjectAnimator.ofFloat(emojiView!!, "translationY", 50f,0f).apply {
-            duration = 100
+    private fun runEntryAnim() {
+        val anim1 = ObjectAnimator.ofFloat(emojiView!!, "translationY", 50f, 0f).apply {
+            duration = TRANSACTION_DURATION
         }
 
-        val anim2 = ObjectAnimator.ofFloat(emojiView!!, "alpha", 0f,1f).apply {
-            duration = 100
+        val anim2 = ObjectAnimator.ofFloat(emojiView!!, "alpha", 0f, 1f).apply {
+            duration = TRANSACTION_DURATION
         }
 
         AnimatorSet().apply {
-            addListener(object : Animator.AnimatorListener{
+            addListener(object : Animator.AnimatorListener {
                 override fun onAnimationRepeat(animation: Animator?) {}
 
                 override fun onAnimationEnd(animation: Animator?) {
                     interruptingTouchEvent = true
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+
+            })
+            playTogether(anim1, anim2)
+            start()
+        }
+    }
+
+    private fun runExitAnim() {
+        val anim1 = ObjectAnimator.ofFloat(emojiView!!, "translationY", 0f, 50f).apply {
+            duration = TRANSACTION_DURATION
+        }
+
+        val anim2 = ObjectAnimator.ofFloat(emojiView!!, "alpha", 1f, 0f).apply {
+            duration = TRANSACTION_DURATION
+        }
+
+        AnimatorSet().apply {
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
                 }
 
                 override fun onAnimationCancel(animation: Animator?) {}
@@ -138,9 +175,12 @@ class ReactionBaseLayout @JvmOverloads constructor(
         if (emojiView == null)
             return
 
-        removeView(emojiView)
-        emojiView = null
+        runExitAnim()
     }
 
-    fun isReactionViewShowing() = emojiView != null
+    fun isReactionViewShowing() = emojiView != null && emojiView!!.alpha == 1f
+
+    companion object {
+        private const val TRANSACTION_DURATION = 120L
+    }
 }
