@@ -2,10 +2,10 @@ package com.dcard.reactionsample.second
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Canvas
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
@@ -20,27 +20,31 @@ class EmojiView @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    var hoverIndex = -1
+    companion object {
+        private const val HOVER_INDEX_NONE = -1
 
-    var originalSize = 0
-    var biggerSize = 0
-    var smallerSize = 0
+        private const val EMOJI_PADDING_BOTTOM = 80
+    }
+
+    val reactionCount = 5
     val reaction1 = ContextCompat.getDrawable(context, R.drawable.reaction_smile)
     val reaction2 = ContextCompat.getDrawable(context, R.drawable.reaction_chu)
     val reaction3 = ContextCompat.getDrawable(context, R.drawable.reaction_crazy)
     val reaction4 = ContextCompat.getDrawable(context, R.drawable.reaction_noface)
     val reaction5 = ContextCompat.getDrawable(context, R.drawable.reaction_cry)
 
-    val reactionCount = 5
-    val xBoundList = mutableListOf<Int>()
-    val yBoundList = mutableListOf<Int>()
-    val emojiList = mutableListOf<Emoji>()
+    var hoverIndex = HOVER_INDEX_NONE
+    var normalSize = 0
+    var biggerSize = 0
+    var smallerSize = 0
 
-    var animator: ValueAnimator? = null
+    private val emojiList = mutableListOf<Emoji>()
+    private var animator: ValueAnimator? = null
+
+    private val dp = Resources.getSystem().displayMetrics.density
+    private val emojiPaddingBottom = (dp * EMOJI_PADDING_BOTTOM).toInt()
 
     init {
-        xBoundList.add(originalSize)
-
         emojiList.add(Emoji().apply { drawable = reaction1 })
         emojiList.add(Emoji().apply { drawable = reaction2 })
         emojiList.add(Emoji().apply { drawable = reaction3 })
@@ -51,12 +55,11 @@ class EmojiView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
 
-        val count = 5
-        originalSize = w / count
-        biggerSize = originalSize * 2
-        smallerSize = (w - biggerSize) / (count - 1)
+        normalSize = w / reactionCount
+        biggerSize = normalSize * 2
+        smallerSize = (w - biggerSize) / (reactionCount - 1)
 
-        modifyBounding(-1)
+        setupInitEmojiSize()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -75,56 +78,24 @@ class EmojiView @JvmOverloads constructor(
 
         when (event.action) {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                hoverIndex = -1
-                createNormalAnimator()
+                select(HOVER_INDEX_NONE)
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (y in 0..height) {
-                    when {
-                        x <= originalSize -> {
-                            if (hoverIndex != 0) {
-                                hoverIndex = 0
-                                createSelectedAnimator(hoverIndex)
+                if (x in 0..width && y in 0..height) {
+
+                    for (i in 0 until reactionCount) {
+                        if (x <= normalSize * (i + 1)) {
+                            if (hoverIndex != i) {
+                                select(i)
                             }
-                        }
-                        x <= originalSize * 2 -> {
-                            if (hoverIndex != 1) {
-                                hoverIndex = 1
-                                createSelectedAnimator(hoverIndex)
-                            }
-                        }
-                        x <= originalSize * 3 -> {
-                            if (hoverIndex != 2) {
-                                hoverIndex = 2
-                                createSelectedAnimator(hoverIndex)
-                            }
-                        }
-                        x <= originalSize * 4 -> {
-                            if (hoverIndex != 3) {
-                                hoverIndex = 3
-                                createSelectedAnimator(hoverIndex)
-                            }
-                        }
-                        x <= width -> {
-                            if (hoverIndex != 4) {
-                                hoverIndex = 4
-                                createSelectedAnimator(hoverIndex)
-                            }
-                        }
-                        else -> {
-                            Log.d("badu", "11111")
-                            if (hoverIndex != -1) {
-                                hoverIndex = -1
-                                createNormalAnimator()
-                            }
+                            break
                         }
                     }
+
                 } else {
-                    if (hoverIndex != -1) {
-                        Log.d("badu", "2222")
-                        hoverIndex = -1
-                        createNormalAnimator()
+                    if (hoverIndex != HOVER_INDEX_NONE) {
+                        select(HOVER_INDEX_NONE)
                     }
                 }
             }
@@ -133,35 +104,33 @@ class EmojiView @JvmOverloads constructor(
         return true
     }
 
-    private fun modifyBounding(hoverIndex: Int) {
+    private fun select(index: Int) {
+        hoverIndex = index
 
-        if (hoverIndex == -1) {
-            for (i in 0 until emojiList.size) {
-                emojiList[i].currentX = i * originalSize
-                emojiList[i].currentY = height - originalSize
-                emojiList[i].currentSize = originalSize
-            }
+        if (index < 0 || index > reactionCount) {
+            runEmojiAnim { setupEmojiAnimToNormalState() }
         } else {
-            var totalX = 0
-            for (i in 0 until emojiList.size) {
-
-                emojiList[i].currentX = totalX
-
-                if (i == hoverIndex) {
-                    emojiList[i].currentY = height - biggerSize
-                    emojiList[i].currentSize = biggerSize
-                    totalX += biggerSize
-                } else {
-                    emojiList[i].currentY = height - smallerSize
-                    emojiList[i].currentSize = smallerSize
-                    totalX += smallerSize
-                }
-            }
+            runEmojiAnim { setupEmojiAnimToHoverState(index) }
         }
-
     }
 
-    private fun createSelectedAnimator(hoverIndex: Int) {
+    private fun setupInitEmojiSize(){
+        for (i in 0 until emojiList.size) {
+            emojiList[i].currentX = i * normalSize
+            emojiList[i].currentY = height - emojiPaddingBottom - normalSize
+            emojiList[i].currentSize = normalSize
+        }
+    }
+
+    private fun setupEmojiAnimToNormalState() {
+
+        for (i in 0 until emojiList.size) {
+            emojiList[i].beginSize = emojiList[i].currentSize
+            emojiList[i].endSize = normalSize
+        }
+    }
+
+    private fun setupEmojiAnimToHoverState(hoverIndex: Int) {
 
         if (hoverIndex < 0 || hoverIndex > emojiList.size) return
 
@@ -174,6 +143,11 @@ class EmojiView @JvmOverloads constructor(
                 emojiList[i].endSize = smallerSize
             }
         }
+    }
+
+    private fun runEmojiAnim(setupEmojiSize: () -> Unit) {
+
+        setupEmojiSize()
 
         if (animator != null && animator!!.isRunning) {
             animator!!.cancel()
@@ -185,7 +159,7 @@ class EmojiView @JvmOverloads constructor(
             addUpdateListener {
                 val value = it.animatedValue as Float
 
-                calculateAllSize(value)
+                calculateEmojiSize(value)
 
                 postInvalidate()
             }
@@ -193,12 +167,10 @@ class EmojiView @JvmOverloads constructor(
 
     }
 
-    private fun calculateAllSize(interpolatedValue: Float) {
-        var totalX = 0
+    private fun calculateEmojiSize(interpolatedValue: Float) {
         for (i in 0 until emojiList.size) {
             emojiList[i].currentSize = getAnimatedSize(i, interpolatedValue)
-            emojiList[i].currentY = height - emojiList[i].currentSize
-            emojiList[i].currentX = totalX
+            emojiList[i].currentY = height - emojiPaddingBottom - emojiList[i].currentSize
         }
 
         calculateCoordinateX()
@@ -210,18 +182,23 @@ class EmojiView @JvmOverloads constructor(
     }
 
     private fun calculateCoordinateX() {
+        //  the first emoji
         emojiList[0].currentX = 0
+
+        //  the last emoji
         emojiList.last().currentX = width - emojiList.last().currentSize
 
+        //  the emojis before the hover index
         for (i in 1 until hoverIndex) {
             emojiList[i].currentX = emojiList[i - 1].currentX + emojiList[i - 1].currentSize
         }
 
+        //  the emojis before after hover index
         for (i in emojiList.size - 2 downTo hoverIndex + 1) {
             emojiList[i].currentX = emojiList[i + 1].currentX - emojiList[i].currentSize
         }
 
-
+        //  the hover emoji
         if (hoverIndex > 0 && hoverIndex != emojiList.size - 1) {
             if (hoverIndex <= (emojiList.size / 2 - 1)) {
                 emojiList[hoverIndex].currentX = emojiList[hoverIndex - 1].currentX + emojiList[hoverIndex - 1].currentSize
@@ -229,30 +206,6 @@ class EmojiView @JvmOverloads constructor(
                 emojiList[hoverIndex].currentX = emojiList[hoverIndex + 1].currentX - emojiList[hoverIndex].currentSize
             }
         }
-    }
-
-    private fun createNormalAnimator() {
-
-        for (i in 0 until emojiList.size) {
-            emojiList[i].beginSize = emojiList[i].currentSize
-            emojiList[i].endSize = originalSize
-        }
-
-        if (animator != null && animator!!.isRunning) {
-            animator!!.cancel()
-        }
-
-        animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 100
-            interpolator = LinearInterpolator()
-            addUpdateListener {
-                val value = it.animatedValue as Float
-
-                calculateAllSize(value)
-
-                postInvalidate()
-            }
-        }.apply { start() }
     }
 
 }
