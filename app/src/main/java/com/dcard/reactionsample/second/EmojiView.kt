@@ -11,6 +11,7 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import com.dcard.reactionsample.R
 import com.dcard.reactionsample.ReactionBaseLayout
+import com.dcard.reactionsample.ReactionConstants
 
 /**
  * Base on [AvatarsView]
@@ -24,7 +25,7 @@ class EmojiView @JvmOverloads constructor(
     companion object {
         private const val HOVER_INDEX_NONE = -1
 
-        private const val EMOJI_PADDING_BOTTOM = 80
+        private const val EMOJI_PADDING_BOTTOM = 40
     }
 
     val reactionCount = 5
@@ -38,6 +39,7 @@ class EmojiView @JvmOverloads constructor(
     var normalSize = 0
     var biggerSize = 0
     var smallerSize = 0
+    var spacing = 0
 
     private val emojiList = mutableListOf<Emoji>()
     private var animator: ValueAnimator? = null
@@ -51,14 +53,15 @@ class EmojiView @JvmOverloads constructor(
         emojiList.add(Emoji().apply { drawable = reaction3 })
         emojiList.add(Emoji().apply { drawable = reaction4 })
         emojiList.add(Emoji().apply { drawable = reaction5 })
+
+        normalSize = (ReactionConstants.getNormalSize(reactionCount) * dp).toInt()
+        biggerSize = (ReactionConstants.SIZE_LARGE * dp).toInt()
+        smallerSize = (ReactionConstants.SIZE_SMALL * dp).toInt()
+        spacing = (ReactionConstants.SPACING * dp).toInt()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-
-        normalSize = w / reactionCount
-        biggerSize = normalSize * 2
-        smallerSize = (w - biggerSize) / (reactionCount - 1)
 
         setupInitEmojiSize()
     }
@@ -145,9 +148,9 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
-    private fun setupInitEmojiSize(){
+    private fun setupInitEmojiSize() {
         for (i in 0 until emojiList.size) {
-            emojiList[i].currentX = i * normalSize
+            emojiList[i].currentX = i * normalSize + (i + 1) * spacing
             emojiList[i].currentY = height - emojiPaddingBottom - normalSize
             emojiList[i].currentSize = normalSize
         }
@@ -214,27 +217,27 @@ class EmojiView @JvmOverloads constructor(
 
     private fun calculateCoordinateX() {
         //  the first emoji
-        emojiList[0].currentX = 0
+        emojiList[0].currentX = spacing
 
         //  the last emoji
-        emojiList.last().currentX = width - emojiList.last().currentSize
+        emojiList.last().currentX = width - spacing - emojiList.last().currentSize
 
         //  the emojis before the hover index
         for (i in 1 until hoverIndex) {
-            emojiList[i].currentX = emojiList[i - 1].currentX + emojiList[i - 1].currentSize
+            emojiList[i].currentX = emojiList[i - 1].currentX + emojiList[i - 1].currentSize + spacing
         }
 
         //  the emojis before after hover index
         for (i in emojiList.size - 2 downTo hoverIndex + 1) {
-            emojiList[i].currentX = emojiList[i + 1].currentX - emojiList[i].currentSize
+            emojiList[i].currentX = emojiList[i + 1].currentX - emojiList[i].currentSize - spacing
         }
 
         //  the hover emoji
         if (hoverIndex > 0 && hoverIndex != emojiList.size - 1) {
             if (hoverIndex <= (emojiList.size / 2 - 1)) {
-                emojiList[hoverIndex].currentX = emojiList[hoverIndex - 1].currentX + emojiList[hoverIndex - 1].currentSize
+                emojiList[hoverIndex].currentX = emojiList[hoverIndex - 1].currentX + emojiList[hoverIndex - 1].currentSize + spacing
             } else {
-                emojiList[hoverIndex].currentX = emojiList[hoverIndex + 1].currentX - emojiList[hoverIndex].currentSize
+                emojiList[hoverIndex].currentX = emojiList[hoverIndex + 1].currentX - emojiList[hoverIndex].currentSize - spacing
             }
         }
     }

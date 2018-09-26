@@ -5,6 +5,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Color
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
@@ -22,17 +23,19 @@ class ReactionBaseLayout @JvmOverloads constructor(
         fun onHandleTouchEvent(event: MotionEvent)
     }
 
+    private val dp = Resources.getSystem().displayMetrics.density
+
     var interruptingTouchEvent = false
     var customTouchEventListener: CustomTouchEventListener? = null
     var reactionRightBound = 0
     var reactionTopBound = 0
-    var reactionWidth = 0
-    var reactionHeight = 0
+    var reactionViewWidth = 0
+    var reactionViewHeight = 0
     var emojiView: EmojiView? = null
 
     init {
-        reactionWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
-        reactionHeight = context.resources.getDimensionPixelSize(R.dimen.reaction_height)
+        reactionViewWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
+        reactionViewHeight = context.resources.getDimensionPixelSize(R.dimen.reaction_height)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -142,34 +145,38 @@ class ReactionBaseLayout @JvmOverloads constructor(
     /**
      * Create proper LayoutParams to show the ReactionView in right position
      */
-    private fun createParams(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) =
-            FrameLayout.LayoutParams(reactionWidth, reactionHeight).apply {
-                when {
-                    touchY <= reactionTopBound && touchX < reactionRightBound -> {
-                        //  left & top
-                        setMargins(touchX, touchY, 0, 0)
-                    }
+    private fun createParams(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int): FrameLayout.LayoutParams {
 
-                    touchY <= reactionTopBound && touchX >= reactionRightBound -> {
-                        //  right & top
-                        setMargins(touchX + childWidth - reactionWidth, touchY,
-                                0, 0)
-                    }
+        reactionViewWidth = (ReactionConstants.getReactionViewSize(5) * dp).toInt()
 
-                    touchY > reactionTopBound && touchX < reactionRightBound -> {
-                        //  left & bottom
-                        setMargins(touchX, touchY + childHeight - reactionHeight,
-                                0, 0)
-                    }
+        return FrameLayout.LayoutParams(reactionViewWidth, reactionViewHeight).apply {
+            when {
+                touchY <= reactionTopBound && touchX < reactionRightBound -> {
+                    //  left & top
+                    setMargins(touchX, touchY, 0, 0)
+                }
 
-                    touchY > reactionTopBound && touchX >= reactionRightBound -> {
-                        //  right & bottom
-                        setMargins(
-                                touchX + childWidth - reactionWidth,
-                                touchY + childHeight - reactionHeight, 0, 0)
-                    }
+                touchY <= reactionTopBound && touchX >= reactionRightBound -> {
+                    //  right & top
+                    setMargins(touchX + childWidth - reactionViewWidth, touchY,
+                            0, 0)
+                }
+
+                touchY > reactionTopBound && touchX < reactionRightBound -> {
+                    //  left & bottom
+                    setMargins(touchX, touchY + childHeight - reactionViewHeight,
+                            0, 0)
+                }
+
+                touchY > reactionTopBound && touchX >= reactionRightBound -> {
+                    //  right & bottom
+                    setMargins(
+                            touchX + childWidth - reactionViewWidth,
+                            touchY + childHeight - reactionViewHeight, 0, 0)
                 }
             }
+        }
+    }
 
     fun hideReactionView() {
         if (emojiView == null)
