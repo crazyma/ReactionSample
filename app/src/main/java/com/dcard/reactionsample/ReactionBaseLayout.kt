@@ -1,10 +1,14 @@
 package com.dcard.reactionsample
 
+import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import com.dcard.reactionsample.second.EmojiView
@@ -71,9 +75,36 @@ class ReactionBaseLayout @JvmOverloads constructor(
 
         addView(emojiView, createParams(touchX, touchY, childWidth, childHeight))
         customTouchEventListener = emojiView
-        interruptingTouchEvent = true
+
+        val anim1 = ObjectAnimator.ofFloat(emojiView!!, "translationY", 50f,0f).apply {
+            duration = 100
+        }
+
+        val anim2 = ObjectAnimator.ofFloat(emojiView!!, "alpha", 0f,1f).apply {
+            duration = 100
+        }
+
+        AnimatorSet().apply {
+            addListener(object : Animator.AnimatorListener{
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    interruptingTouchEvent = true
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+
+            })
+            playTogether(anim1, anim2)
+            start()
+        }
     }
 
+    /**
+     * Create proper LayoutParams to show the ReactionView in right position
+     */
     private fun createParams(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) =
             FrameLayout.LayoutParams(reactionWidth, reactionHeight).apply {
                 when {
