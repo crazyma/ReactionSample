@@ -185,29 +185,6 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
-    fun runParabolaAnim(){
-        parabola.controlX = (parabola.beginX + parabola.endX / 2f).toInt()
-
-        parabolaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 500
-            interpolator = LinearInterpolator()
-            addUpdateListener {
-                val value = it.animatedValue as Float
-
-                parabola.currentX = bezierAlg(parabola.beginX, parabola.controlX, parabola.endX, value).toInt()
-                parabola.currentY = bezierAlg(parabola.beginY, parabola.controlY, parabola.endY, value).toInt()
-
-                val changeSize = parabola.endSize - parabola.beginSize
-                parabola.currentSize = parabola.beginSize + (value * changeSize).toInt()
-
-                postInvalidate()
-            }
-        }.apply { start() }
-    }
-
-    private fun bezierAlg(p0: Int, p1: Int, p2: Int, t: Float) =
-            (1f - t) * (1f - t) * p0 + 2f * t * (1f - t) * p1 + t * t * p2
-
     fun runEntryAnim() {
         state = STATE_ENTRY
 
@@ -283,6 +260,22 @@ class EmojiView @JvmOverloads constructor(
 
     }
 
+    private fun runParabolaAnim() {
+        parabola.controlX = (parabola.beginX + parabola.endX / 2f).toInt()
+
+        parabolaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 500
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+
+                parabola.calculateCurrentValue(value)
+
+                postInvalidate()
+            }
+        }.apply { start() }
+    }
+
     private fun runEmojiAnim(setupEmojiSize: () -> Unit) {
 
         setupEmojiSize()
@@ -299,7 +292,7 @@ class EmojiView @JvmOverloads constructor(
 
                 calculateEmojiSize(value)
 
-                if(hoverIndex >= 0 && hoverIndex < emojiList.size) {
+                if (hoverIndex >= 0 && hoverIndex < emojiList.size) {
                     parabola.beginX = emojiList[hoverIndex].currentX
                     parabola.beginY = emojiList[hoverIndex].currentY
                     parabola.beginSize = emojiList[hoverIndex].currentSize
@@ -333,7 +326,7 @@ class EmojiView @JvmOverloads constructor(
         board.width = width.toFloat()
         board.currentHeight = (normalSize + spacing * 2).toFloat()
         board.x = 0f
-        board.currentY = (height - emojiPaddingBottom + spacing).toFloat()
+        board.currentBottomY = (height - emojiPaddingBottom + spacing).toFloat()
 
         for (i in 0 until emojiList.size) {
             emojiList[i].currentX = i * normalSize + (i + 1) * spacing
@@ -353,15 +346,15 @@ class EmojiView @JvmOverloads constructor(
         //  anim preparation
         board.beginHeight = (normalSize + spacing * 2).toFloat()
         board.endHeight = board.beginHeight
-        board.currentY = board.beginBaseY
+        board.currentBottomY = board.beginBottomY
 
         board.beginAlpha = 0
         board.endAlpha = 255
         board.currentAlpha = board.beginAlpha
 
-        board.beginBaseY = (height - emojiPaddingBottom + spacing + offset).toFloat()
-        board.endBaseY = (height - emojiPaddingBottom + spacing).toFloat()
-        board.currentY = board.beginBaseY
+        board.beginBottomY = (height - emojiPaddingBottom + spacing + offset).toFloat()
+        board.endBottomY = (height - emojiPaddingBottom + spacing).toFloat()
+        board.currentBottomY = board.beginBottomY
 
         for (i in 0 until emojiList.size) {
             emojiList[i].beginSize = normalSize
@@ -383,8 +376,8 @@ class EmojiView @JvmOverloads constructor(
         board.beginHeight = board.currentHeight
         board.endHeight = (normalSize + spacing * 2).toFloat()
 
-        board.beginBaseY = board.currentY
-        board.endBaseY = (height - emojiPaddingBottom + spacing + offset).toFloat()
+        board.beginBottomY = board.currentBottomY
+        board.endBottomY = (height - emojiPaddingBottom + spacing + offset).toFloat()
 
         board.beginAlpha = board.currentAlpha
         board.endAlpha = 0
@@ -435,14 +428,14 @@ class EmojiView @JvmOverloads constructor(
 
     private fun calculateEmojiPosition(interpolatedValue: Float) {
 
-        board.currentY = getBoardAnimatedY(interpolatedValue)
-        board.currentHeight = getBoardAnimatedSize(interpolatedValue)
-        board.currentAlpha = getBoardAnimatedAlpha(interpolatedValue)
+        board.calculateCurrentBottomY(interpolatedValue)
+        board.calculateCurrentSize(interpolatedValue)
+        board.calculateCurrentAlpha(interpolatedValue)
 
         currentAlpha = getEmojiAnimatedAlpha(interpolatedValue)
         for (i in 0 until emojiList.size) {
-            emojiList[i].currentSize = getEmojiAnimatedSize(i, interpolatedValue)
-            emojiList[i].currentY = getEmojiAnimatedY(i, interpolatedValue)
+            emojiList[i].calculateCurrentSize(interpolatedValue)
+            emojiList[i].calculateCurrentY(interpolatedValue)
         }
 
         calculateCoordinateX()
@@ -450,44 +443,19 @@ class EmojiView @JvmOverloads constructor(
 
     private fun calculateEmojiSize(interpolatedValue: Float) {
 
-        board.currentHeight = getBoardAnimatedSize(interpolatedValue)
+        board.calculateCurrentSize(interpolatedValue)
 
         for (i in 0 until emojiList.size) {
-            emojiList[i].currentSize = getEmojiAnimatedSize(i, interpolatedValue)
+            emojiList[i].calculateCurrentSize(interpolatedValue)
             emojiList[i].currentY = height - emojiPaddingBottom - emojiList[i].currentSize
         }
 
         calculateCoordinateX()
     }
 
-    private fun getEmojiAnimatedY(position: Int, interpolatedValue: Float): Int {
-        val changeY = emojiList[position].endY - emojiList[position].beginY
-        return emojiList[position].beginY + (interpolatedValue * changeY).toInt()
-    }
-
-    private fun getEmojiAnimatedSize(position: Int, interpolatedValue: Float): Int {
-        val changeSize = emojiList[position].endSize - emojiList[position].beginSize
-        return emojiList[position].beginSize + (interpolatedValue * changeSize).toInt()
-    }
-
     private fun getEmojiAnimatedAlpha(interpolatedValue: Float): Int {
         val changeAlpha = endAlpha - beginAlpha
         return (beginAlpha + interpolatedValue * changeAlpha).toInt()
-    }
-
-    private fun getBoardAnimatedY(interpolatedValue: Float): Float {
-        val changeY = board.endBaseY - board.beginBaseY
-        return board.beginBaseY + interpolatedValue * changeY
-    }
-
-    private fun getBoardAnimatedSize(interpolatedValue: Float): Float {
-        val changeSize = board.endHeight - board.beginHeight
-        return board.beginHeight + interpolatedValue * changeSize
-    }
-
-    private fun getBoardAnimatedAlpha(interpolatedValue: Float): Int {
-        val changeAlpha = board.endAlpha - board.beginAlpha
-        return (board.beginAlpha + interpolatedValue * changeAlpha).toInt()
     }
 
     private fun calculateCoordinateX() {

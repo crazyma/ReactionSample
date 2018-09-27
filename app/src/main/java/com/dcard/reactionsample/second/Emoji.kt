@@ -6,7 +6,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 
-class Emoji {
+class Emoji: InterpolatedCalculator(){
 
     var drawable: Drawable? = null
     var bitmap: Bitmap? = null
@@ -31,6 +31,14 @@ class Emoji {
         bitmap?.apply {
             canvas.drawBitmap(this, null, Rect(currentX, currentY, currentX + currentSize, currentY + currentSize), paint)
         }
+    }
+
+    fun calculateCurrentY(fraction: Float){
+        currentY = calculateInterpolatedValue(beginY, endY, fraction).toInt()
+    }
+
+    fun calculateCurrentSize(fraction: Float){
+        currentSize = calculateInterpolatedValue(beginSize, endSize, fraction).toInt()
     }
 
 }
