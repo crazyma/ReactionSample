@@ -26,10 +26,9 @@ class Emoji {
     var beginSize = 0
     var endSize = 0
 
-    fun drawEmoji(canvas: Canvas, paint: Paint){
+    fun drawEmoji(canvas: Canvas, paint: Paint) {
 
         bitmap?.apply {
-            Rect(currentX, currentY, currentX + currentSize, currentY + currentSize)
             canvas.drawBitmap(this, null, Rect(currentX, currentY, currentX + currentSize, currentY + currentSize), paint)
         }
     }

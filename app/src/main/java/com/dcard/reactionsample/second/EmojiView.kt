@@ -49,6 +49,10 @@ class EmojiView @JvmOverloads constructor(
     var smallerSize = 0
     var spacing = 0
 
+    var currentAlpha = 0
+    var beginAlpha = 0
+    var endAlpha = 0
+
     private val emojiList = mutableListOf<Emoji>()
     private val board = Board(context)
     private var animator: ValueAnimator? = null
@@ -81,6 +85,7 @@ class EmojiView @JvmOverloads constructor(
 
         board.drawBoard(canvas)
 
+        paint.alpha = currentAlpha
         emojiList.forEach {
             it.drawEmoji(canvas, paint)
         }
@@ -169,7 +174,7 @@ class EmojiView @JvmOverloads constructor(
         }
 
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 100
+            duration = ReactionConstants.DURATION_TRANSACTION
             interpolator = LinearInterpolator()
             addUpdateListener {
                 val value = it.animatedValue as Float
@@ -204,7 +209,7 @@ class EmojiView @JvmOverloads constructor(
         }
 
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 100
+            duration = ReactionConstants.DURATION_TRANSACTION
             interpolator = LinearInterpolator()
             addUpdateListener {
                 val value = it.animatedValue as Float
@@ -239,7 +244,7 @@ class EmojiView @JvmOverloads constructor(
         }
 
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 100
+            duration = ReactionConstants.DURATION_HOVER
             interpolator = LinearInterpolator()
             addUpdateListener {
                 val value = it.animatedValue as Float
@@ -293,6 +298,10 @@ class EmojiView @JvmOverloads constructor(
         board.endHeight = board.beginHeight
         board.currentY = board.beginBaseY
 
+        board.beginAlpha = 0
+        board.endAlpha = 255
+        board.currentAlpha = board.beginAlpha
+
         board.beginBaseY = (height - emojiPaddingBottom + spacing + offset).toFloat()
         board.endBaseY = (height - emojiPaddingBottom + spacing).toFloat()
         board.currentY = board.beginBaseY
@@ -304,6 +313,10 @@ class EmojiView @JvmOverloads constructor(
             emojiList[i].endY = height - emojiPaddingBottom - normalSize
             emojiList[i].currentY = emojiList[i].beginY
         }
+
+        beginAlpha = 0
+        endAlpha = 255
+        currentAlpha = beginAlpha
     }
 
     private fun setupEmojiAnimToExitState() {
@@ -316,6 +329,9 @@ class EmojiView @JvmOverloads constructor(
         board.beginBaseY = board.currentY
         board.endBaseY = (height - emojiPaddingBottom + spacing + offset).toFloat()
 
+        board.beginAlpha = board.currentAlpha
+        board.endAlpha = 0
+
         for (i in 0 until emojiList.size) {
 
             //  anim preparation
@@ -325,6 +341,9 @@ class EmojiView @JvmOverloads constructor(
             emojiList[i].beginY = emojiList[i].currentY
             emojiList[i].endY = height - emojiPaddingBottom - normalSize + offset
         }
+
+        beginAlpha = currentAlpha
+        endAlpha = 0
     }
 
     private fun setupEmojiAnimToNormalState() {
@@ -361,7 +380,9 @@ class EmojiView @JvmOverloads constructor(
 
         board.currentY = getBoardAnimatedY(interpolatedValue)
         board.currentHeight = getBoardAnimatedSize(interpolatedValue)
+        board.currentAlpha = getBoardAnimatedAlpha(interpolatedValue)
 
+        currentAlpha = getEmojiAnimatedAlpha(interpolatedValue)
         for (i in 0 until emojiList.size) {
             emojiList[i].currentSize = getEmojiAnimatedSize(i, interpolatedValue)
             emojiList[i].currentY = getEmojiAnimatedY(i, interpolatedValue)
@@ -392,6 +413,11 @@ class EmojiView @JvmOverloads constructor(
         return emojiList[position].beginSize + (interpolatedValue * changeSize).toInt()
     }
 
+    private fun getEmojiAnimatedAlpha(interpolatedValue: Float): Int{
+        val changeAlpha = endAlpha - beginAlpha
+        return (beginAlpha + interpolatedValue * changeAlpha).toInt()
+    }
+
     private fun getBoardAnimatedY(interpolatedValue: Float): Float {
         val changeY = board.endBaseY - board.beginBaseY
         return board.beginBaseY + interpolatedValue * changeY
@@ -400,6 +426,11 @@ class EmojiView @JvmOverloads constructor(
     private fun getBoardAnimatedSize(interpolatedValue: Float): Float {
         val changeSize = board.endHeight - board.beginHeight
         return board.beginHeight + interpolatedValue * changeSize
+    }
+
+    private fun getBoardAnimatedAlpha(interpolatedValue: Float): Int{
+        val changeAlpha = board.endAlpha - board.beginAlpha
+        return (board.beginAlpha + interpolatedValue * changeAlpha).toInt()
     }
 
     private fun calculateCoordinateX() {

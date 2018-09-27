@@ -1,7 +1,6 @@
 package com.dcard.reactionsample
 
 import android.animation.Animator
-import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
@@ -77,8 +76,8 @@ class ReactionBaseLayout @JvmOverloads constructor(
         } else {
             emojiView = EmojiView(context).apply {
                 this.setBackgroundColor(Color.GREEN)
-                alpha = 0f
                 id = R.id.id_root_view
+                alpha = 0f
                 ViewCompat.setElevation(this, 32f)
             }
 
@@ -86,19 +85,14 @@ class ReactionBaseLayout @JvmOverloads constructor(
             customTouchEventListener = emojiView
         }
 
-        runEntryAnim()
+        emojiView!!.post {
+            runEntryAnim()
+        }
     }
 
     private fun runEntryAnim() {
-        val anim1 = ObjectAnimator.ofFloat(emojiView!!, "translationY", 50f, 0f).apply {
-            duration = TRANSACTION_DURATION
-        }
-
-        val anim2 = ObjectAnimator.ofFloat(emojiView!!, "alpha", 0f, 1f).apply {
-            duration = TRANSACTION_DURATION
-        }
-
-        AnimatorSet().apply {
+        ObjectAnimator.ofFloat(emojiView!!, "alpha", 1f, 1f).apply {
+            duration = ReactionConstants.DURATION_TRANSACTION
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationRepeat(animation: Animator?) {}
 
@@ -108,24 +102,17 @@ class ReactionBaseLayout @JvmOverloads constructor(
 
                 override fun onAnimationCancel(animation: Animator?) {}
 
-                override fun onAnimationStart(animation: Animator?) {}
+                override fun onAnimationStart(animation: Animator?) {
+                    emojiView!!.runEntryAnim()
+                }
 
             })
-            playTogether(anim1, anim2)
-            start()
-        }
+        }.start()
     }
 
     private fun runExitAnim() {
-        val anim1 = ObjectAnimator.ofFloat(emojiView!!, "translationY", 0f, 50f).apply {
-            duration = TRANSACTION_DURATION
-        }
-
-        val anim2 = ObjectAnimator.ofFloat(emojiView!!, "alpha", 1f, 0f).apply {
-            duration = TRANSACTION_DURATION
-        }
-
-        AnimatorSet().apply {
+        ObjectAnimator.ofFloat(emojiView!!, "alpha", 1f, 1f).apply {
+            duration = ReactionConstants.DURATION_TRANSACTION
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationRepeat(animation: Animator?) {}
 
@@ -134,12 +121,12 @@ class ReactionBaseLayout @JvmOverloads constructor(
 
                 override fun onAnimationCancel(animation: Animator?) {}
 
-                override fun onAnimationStart(animation: Animator?) {}
+                override fun onAnimationStart(animation: Animator?) {
+                    emojiView!!.runExitAnim()
+                }
 
             })
-            playTogether(anim1, anim2)
-            start()
-        }
+        }.start()
     }
 
     /**
@@ -186,8 +173,4 @@ class ReactionBaseLayout @JvmOverloads constructor(
     }
 
     fun isReactionViewShowing() = emojiView != null && emojiView!!.alpha == 1f
-
-    companion object {
-        private const val TRANSACTION_DURATION = 120L
-    }
 }

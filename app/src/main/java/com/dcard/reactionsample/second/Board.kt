@@ -18,19 +18,24 @@ class Board(context: Context) {
     var beginHeight = 0f
     var endHeight = 0f
 
+    var currentAlpha = 0
+    var beginAlpha = 0
+    var endAlpha = 0
+
     private lateinit var paint: Paint
 
     init {
         initPaint(context)
     }
 
-    fun drawBoard(canvas: Canvas){
+    fun drawBoard(canvas: Canvas) {
         val radius = currentHeight / 2
         val board = RectF(x, currentY - currentHeight, x + width, currentY)
+        paint.alpha = currentAlpha
         canvas.drawRoundRect(board, radius, radius, paint)
     }
 
-    private fun initPaint(context: Context){
+    private fun initPaint(context: Context) {
         paint = Paint().apply {
             isAntiAlias = true
             style = Paint.Style.FILL
