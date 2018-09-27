@@ -10,7 +10,9 @@ class Board(context: Context) {
 
     var x = 0f
     var width = 0f
-    var baseY = 0f
+    var currentY = 0f
+    var beginBaseY = 0f
+    var endBaseY = 0f
 
     var currentHeight = 0f
     var beginHeight = 0f
@@ -24,7 +26,7 @@ class Board(context: Context) {
 
     fun drawBoard(canvas: Canvas){
         val radius = currentHeight / 2
-        val board = RectF(x, baseY - currentHeight, x + width, baseY)
+        val board = RectF(x, currentY - currentHeight, x + width, currentY)
         canvas.drawRoundRect(board, radius, radius, paint)
     }
 

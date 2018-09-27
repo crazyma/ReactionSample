@@ -1,5 +1,6 @@
 package com.dcard.reactionsample.second
 
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
@@ -26,6 +27,10 @@ class EmojiView @JvmOverloads constructor(
     companion object {
         private const val HOVER_INDEX_NONE = -1
 
+        private const val STATE_ENTRY = 0x10
+        private const val STATE_EXIT = 0x20
+        private const val STATE_INTERACTING = 0x30
+
         private const val EMOJI_PADDING_BOTTOM = 40
     }
 
@@ -46,6 +51,7 @@ class EmojiView @JvmOverloads constructor(
     private val emojiList = mutableListOf<Emoji>()
     private val board = Board(context)
     private var animator: ValueAnimator? = null
+    private var state = 0
 
     private val dp = Resources.getSystem().displayMetrics.density
     private val emojiPaddingBottom = (dp * EMOJI_PADDING_BOTTOM).toInt()
@@ -66,7 +72,7 @@ class EmojiView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
 
-        setupInitEmojiSize()
+//        setupInitEmojiSize()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -75,7 +81,7 @@ class EmojiView @JvmOverloads constructor(
         board.drawBoard(canvas)
 
         emojiList.forEach {
-            it.drawEmoji(canvas,paint)
+            it.drawEmoji(canvas, paint)
         }
 
     }
@@ -91,20 +97,24 @@ class EmojiView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (x in 0..width && y in 0..height) {
 
-                    for (i in 0 until reactionCount) {
-                        if (x <= normalSize * (i + 1)) {
-                            if (hoverIndex != i) {
-                                select(i)
+                if (state == STATE_INTERACTING) {
+
+                    if (x in 0..width && y in 0..height) {
+
+                        for (i in 0 until reactionCount) {
+                            if (x <= normalSize * (i + 1)) {
+                                if (hoverIndex != i) {
+                                    select(i)
+                                }
+                                break
                             }
-                            break
                         }
-                    }
 
-                } else {
-                    if (hoverIndex != HOVER_INDEX_NONE) {
-                        select(HOVER_INDEX_NONE)
+                    } else {
+                        if (hoverIndex != HOVER_INDEX_NONE) {
+                            select(HOVER_INDEX_NONE)
+                        }
                     }
                 }
             }
@@ -123,25 +133,64 @@ class EmojiView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (x in 0..width && y in 0..height) {
 
-                    for (i in 0 until reactionCount) {
-                        if (x <= normalSize * (i + 1)) {
-                            if (hoverIndex != i) {
-                                select(i)
+                if (state == STATE_INTERACTING) {
+                    if (x in 0..width && y in 0..height) {
+
+                        for (i in 0 until reactionCount) {
+                            if (x <= normalSize * (i + 1)) {
+                                if (hoverIndex != i) {
+                                    select(i)
+                                }
+                                break
                             }
-                            break
                         }
-                    }
 
-                } else {
-                    if (hoverIndex != HOVER_INDEX_NONE) {
-                        select(HOVER_INDEX_NONE)
+                    } else {
+                        if (hoverIndex != HOVER_INDEX_NONE) {
+                            select(HOVER_INDEX_NONE)
+                        }
                     }
                 }
             }
         }
     }
+
+    fun runEntryAnim() {
+        state = STATE_ENTRY
+
+        setupEmojiAnimFromEntryState()
+
+        if (animator != null && animator!!.isRunning) {
+            animator!!.cancel()
+        }
+
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 100
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+
+                calculateEmojiPosition(value)
+
+                postInvalidate()
+            }
+
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    state = STATE_INTERACTING
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+
+            })
+        }.apply { start() }
+    }
+
 
     private fun select(index: Int) {
         hoverIndex = index
@@ -158,7 +207,7 @@ class EmojiView @JvmOverloads constructor(
         board.width = width.toFloat()
         board.currentHeight = (normalSize + spacing * 2).toFloat()
         board.x = 0f
-        board.baseY = (height - emojiPaddingBottom + spacing).toFloat()
+        board.currentY = (height - emojiPaddingBottom + spacing).toFloat()
 
         for (i in 0 until emojiList.size) {
             emojiList[i].currentX = i * normalSize + (i + 1) * spacing
@@ -167,14 +216,25 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
-    private fun setupBoardAnimToNormalState() {
-        board.beginHeight = board.currentHeight
-        board.endHeight = (normalSize + 2 * spacing).toFloat()
-    }
+    private fun setupEmojiAnimFromEntryState() {
 
-    private fun setupBoardAnimToHoverState() {
-        board.beginHeight = board.currentHeight
-        board.endHeight = (smallerSize + 2 * spacing).toFloat()
+        val offset = normalSize / 2
+
+        board.width = width.toFloat()
+        board.currentHeight = (normalSize + spacing * 2).toFloat()
+        board.x = 0f
+
+        board.beginBaseY = (height - emojiPaddingBottom + spacing + offset).toFloat()
+        board.endBaseY = (height - emojiPaddingBottom + spacing).toFloat()
+        board.currentY = board.beginBaseY
+
+        for (i in 0 until emojiList.size) {
+            emojiList[i].beginSize = normalSize
+            emojiList[i].endSize = normalSize
+            emojiList[i].beginY = height - emojiPaddingBottom - normalSize + offset
+            emojiList[i].endY = height - emojiPaddingBottom - normalSize
+            emojiList[i].currentY = emojiList[i].beginY
+        }
     }
 
     private fun setupEmojiAnimToNormalState() {
@@ -227,6 +287,18 @@ class EmojiView @JvmOverloads constructor(
 
     }
 
+    private fun calculateEmojiPosition(interpolatedValue: Float) {
+
+        board.currentY = getBoardAnimatedY(interpolatedValue)
+
+        for (i in 0 until emojiList.size) {
+            emojiList[i].currentSize = getEmojiAnimatedSize(i, interpolatedValue)
+            emojiList[i].currentY = getEmojiAnimatedY(i, interpolatedValue)
+        }
+
+        calculateCoordinateX()
+    }
+
     private fun calculateEmojiSize(interpolatedValue: Float) {
 
         board.currentHeight = getBoardAnimatedSize(interpolatedValue)
@@ -239,9 +311,19 @@ class EmojiView @JvmOverloads constructor(
         calculateCoordinateX()
     }
 
+    private fun getEmojiAnimatedY(position: Int, interpolatedValue: Float): Int {
+        val changeY = emojiList[position].endY - emojiList[position].beginY
+        return emojiList[position].beginY + (interpolatedValue * changeY).toInt()
+    }
+
     private fun getEmojiAnimatedSize(position: Int, interpolatedValue: Float): Int {
         val changeSize = emojiList[position].endSize - emojiList[position].beginSize
         return emojiList[position].beginSize + (interpolatedValue * changeSize).toInt()
+    }
+
+    private fun getBoardAnimatedY(interpolatedValue: Float): Float {
+        val changeY = board.endBaseY - board.beginBaseY
+        return board.beginBaseY + interpolatedValue * changeY
     }
 
     private fun getBoardAnimatedSize(interpolatedValue: Float): Float {

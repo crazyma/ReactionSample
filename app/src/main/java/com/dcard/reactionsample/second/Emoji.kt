@@ -16,9 +16,13 @@ class Emoji {
     var bigSize: Int = 0
 
     var baseLine = 0    //  要先設定
+
     var currentX = 0
     var currentY = 0
     var currentSize = 0
+
+    var beginY = 0
+    var endY = 0
     var beginSize = 0
     var endSize = 0
 
