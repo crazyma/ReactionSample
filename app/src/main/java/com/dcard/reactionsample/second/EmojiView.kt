@@ -3,8 +3,9 @@ package com.dcard.reactionsample.second
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.support.v4.content.ContextCompat
+import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -28,12 +29,13 @@ class EmojiView @JvmOverloads constructor(
         private const val EMOJI_PADDING_BOTTOM = 40
     }
 
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     val reactionCount = 5
-    val reaction1 = ContextCompat.getDrawable(context, R.drawable.reaction_smile)
-    val reaction2 = ContextCompat.getDrawable(context, R.drawable.reaction_chu)
-    val reaction3 = ContextCompat.getDrawable(context, R.drawable.reaction_crazy)
-    val reaction4 = ContextCompat.getDrawable(context, R.drawable.reaction_noface)
-    val reaction5 = ContextCompat.getDrawable(context, R.drawable.reaction_cry)
+    val bitmap1 = BitmapFactory.decodeResource(resources, R.drawable.reaction_smile)
+    val bitmap2 = BitmapFactory.decodeResource(resources, R.drawable.reaction_chu)
+    val bitmap3 = BitmapFactory.decodeResource(resources, R.drawable.reaction_crazy)
+    val bitmap4 = BitmapFactory.decodeResource(resources, R.drawable.reaction_noface)
+    val bitmap5 = BitmapFactory.decodeResource(resources, R.drawable.reaction_cry)
 
     var hoverIndex = HOVER_INDEX_NONE
     var normalSize = 0
@@ -49,11 +51,11 @@ class EmojiView @JvmOverloads constructor(
     private val emojiPaddingBottom = (dp * EMOJI_PADDING_BOTTOM).toInt()
 
     init {
-        emojiList.add(Emoji().apply { drawable = reaction1 })
-        emojiList.add(Emoji().apply { drawable = reaction2 })
-        emojiList.add(Emoji().apply { drawable = reaction3 })
-        emojiList.add(Emoji().apply { drawable = reaction4 })
-        emojiList.add(Emoji().apply { drawable = reaction5 })
+        emojiList.add(Emoji().apply { bitmap = bitmap1 })
+        emojiList.add(Emoji().apply { bitmap = bitmap2 })
+        emojiList.add(Emoji().apply { bitmap = bitmap3 })
+        emojiList.add(Emoji().apply { bitmap = bitmap4 })
+        emojiList.add(Emoji().apply { bitmap = bitmap5 })
 
         normalSize = (ReactionConstants.getNormalSize(reactionCount) * dp).toInt()
         biggerSize = (ReactionConstants.SIZE_LARGE * dp).toInt()
@@ -73,7 +75,7 @@ class EmojiView @JvmOverloads constructor(
         board.drawBoard(canvas)
 
         emojiList.forEach {
-            it.drawEmoji(canvas)
+            it.drawEmoji(canvas,paint)
         }
 
     }

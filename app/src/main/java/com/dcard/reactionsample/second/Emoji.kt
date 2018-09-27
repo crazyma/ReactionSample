@@ -1,11 +1,15 @@
 package com.dcard.reactionsample.second
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 
 class Emoji {
 
     var drawable: Drawable? = null
+    var bitmap: Bitmap? = null
     var resourceId: Int = 0
     var normalSize: Int = 0
     var smallSize: Int = 0
@@ -18,10 +22,11 @@ class Emoji {
     var beginSize = 0
     var endSize = 0
 
-    fun drawEmoji(canvas: Canvas){
-        drawable?.apply {
-            setBounds(currentX, currentY, currentX + currentSize, currentY + currentSize)
-            draw(canvas)
+    fun drawEmoji(canvas: Canvas, paint: Paint){
+
+        bitmap?.apply {
+            Rect(currentX, currentY, currentX + currentSize, currentY + currentSize)
+            canvas.drawBitmap(this, null, Rect(currentX, currentY, currentX + currentSize, currentY + currentSize), paint)
         }
     }
 
