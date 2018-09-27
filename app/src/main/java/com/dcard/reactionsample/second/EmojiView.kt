@@ -56,7 +56,9 @@ class EmojiView @JvmOverloads constructor(
     private val emojiList = mutableListOf<Emoji>()
     private val board = Board(context)
     private var animator: ValueAnimator? = null
+    private var parabolaAnimator: ValueAnimator? = null
     private var state = STATE_DISABLE
+    private var parabola = Parabola()
 
     private val dp = Resources.getSystem().displayMetrics.density
     private val emojiPaddingBottom = (dp * EMOJI_PADDING_BOTTOM).toInt()
@@ -90,6 +92,8 @@ class EmojiView @JvmOverloads constructor(
             it.drawEmoji(canvas, paint)
         }
 
+        parabola.draw(canvas)
+
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -98,9 +102,18 @@ class EmojiView @JvmOverloads constructor(
         val y = event.y.toInt()
         if (state == STATE_INTERACTING) {
             when (event.action) {
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    select(HOVER_INDEX_NONE)
+                MotionEvent.ACTION_UP -> {
+                    if (x in 0..width && y in 0..height) {
+                        runParabolaAnim()
+                    }
+
+                    runExitAnim()
                 }
+
+                MotionEvent.ACTION_CANCEL -> {
+                    runExitAnim()
+                }
+
 
                 MotionEvent.ACTION_MOVE -> {
 
@@ -135,8 +148,16 @@ class EmojiView @JvmOverloads constructor(
 
         if (state == STATE_INTERACTING) {
             when (event.action) {
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    select(HOVER_INDEX_NONE)
+                MotionEvent.ACTION_UP -> {
+                    if (x in 0..width && y in 0..height) {
+                        runParabolaAnim()
+                    }
+
+                    runExitAnim()
+                }
+
+                MotionEvent.ACTION_CANCEL -> {
+                    runExitAnim()
                 }
 
                 MotionEvent.ACTION_MOVE -> {
@@ -164,6 +185,29 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
+    fun runParabolaAnim(){
+        parabola.controlX = (parabola.beginX + parabola.endX / 2f).toInt()
+
+        parabolaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 500
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+
+                parabola.currentX = bezierAlg(parabola.beginX, parabola.controlX, parabola.endX, value).toInt()
+                parabola.currentY = bezierAlg(parabola.beginY, parabola.controlY, parabola.endY, value).toInt()
+
+                val changeSize = parabola.endSize - parabola.beginSize
+                parabola.currentSize = parabola.beginSize + (value * changeSize).toInt()
+
+                postInvalidate()
+            }
+        }.apply { start() }
+    }
+
+    private fun bezierAlg(p0: Int, p1: Int, p2: Int, t: Float) =
+            (1f - t) * (1f - t) * p0 + 2f * t * (1f - t) * p1 + t * t * p2
+
     fun runEntryAnim() {
         state = STATE_ENTRY
 
@@ -188,6 +232,10 @@ class EmojiView @JvmOverloads constructor(
                 override fun onAnimationRepeat(animation: Animator?) {}
 
                 override fun onAnimationEnd(animation: Animator?) {
+                    parabola.endX = this@EmojiView.width
+                    parabola.endY = this@EmojiView.height
+                    parabola.endSize = smallerSize
+
                     state = STATE_INTERACTING
                 }
 
@@ -251,6 +299,12 @@ class EmojiView @JvmOverloads constructor(
 
                 calculateEmojiSize(value)
 
+                if(hoverIndex >= 0 && hoverIndex < emojiList.size) {
+                    parabola.beginX = emojiList[hoverIndex].currentX
+                    parabola.beginY = emojiList[hoverIndex].currentY
+                    parabola.beginSize = emojiList[hoverIndex].currentSize
+                }
+
                 postInvalidate()
             }
         }.apply { start() }
@@ -263,7 +317,10 @@ class EmojiView @JvmOverloads constructor(
         if (index < 0 || index > reactionCount) {
             runEmojiAnim { setupEmojiAnimToNormalState() }
         } else {
-            runEmojiAnim { setupEmojiAnimToHoverState(index) }
+            runEmojiAnim {
+                setupEmojiAnimToHoverState(index)
+                parabola.bitmap = emojiList[index].bitmap
+            }
         }
     }
 
@@ -413,7 +470,7 @@ class EmojiView @JvmOverloads constructor(
         return emojiList[position].beginSize + (interpolatedValue * changeSize).toInt()
     }
 
-    private fun getEmojiAnimatedAlpha(interpolatedValue: Float): Int{
+    private fun getEmojiAnimatedAlpha(interpolatedValue: Float): Int {
         val changeAlpha = endAlpha - beginAlpha
         return (beginAlpha + interpolatedValue * changeAlpha).toInt()
     }
@@ -428,7 +485,7 @@ class EmojiView @JvmOverloads constructor(
         return board.beginHeight + interpolatedValue * changeSize
     }
 
-    private fun getBoardAnimatedAlpha(interpolatedValue: Float): Int{
+    private fun getBoardAnimatedAlpha(interpolatedValue: Float): Int {
         val changeAlpha = board.endAlpha - board.beginAlpha
         return (board.beginAlpha + interpolatedValue * changeAlpha).toInt()
     }

@@ -56,16 +56,7 @@ class ReactionBaseLayout @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-
-        when (event.action) {
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                hideReactionView()
-            }
-
-            else -> {
-                customTouchEventListener?.onHandleTouchEvent(event)
-            }
-        }
+        customTouchEventListener?.onHandleTouchEvent(event)
 
         return true
     }
