@@ -32,5 +32,10 @@
 
     </FrameLayout>
 
+    <com.dcard.reactionsample.AvatarsView
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:background="@android:color/holo_green_light"/>
+
 
 </com.dcard.reactionsample.ReactionBaseLayout>
