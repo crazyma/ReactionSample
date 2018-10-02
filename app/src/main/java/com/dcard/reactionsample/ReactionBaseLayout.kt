@@ -64,12 +64,14 @@ class ReactionBaseLayout @JvmOverloads constructor(
     fun showReactionView(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) {
         if (emojiView != null) {
             emojiView!!.layoutParams = createParams(touchX, touchY, childWidth, childHeight)
+            emojiView!!.isLaunchFromBottom = checkLaunchPosition(touchY)
         } else {
             emojiView = EmojiView(context).apply {
                 this.setBackgroundColor(Color.GREEN)
                 id = R.id.id_root_view
                 alpha = 0f
                 ViewCompat.setElevation(this, 32f)
+                isLaunchFromBottom = checkLaunchPosition(touchY)
             }
 
             addView(emojiView, createParams(touchX, touchY, childWidth, childHeight))
@@ -155,6 +157,10 @@ class ReactionBaseLayout @JvmOverloads constructor(
             }
         }
     }
+
+    private fun checkLaunchPosition(touchY: Int) =
+            touchY > reactionTopBound
+
 
     fun hideReactionView() {
         if (emojiView == null)

@@ -55,6 +55,7 @@ class EmojiView @JvmOverloads constructor(
     var currentAlpha = 0
     var beginAlpha = 0
     var endAlpha = 0
+    var isLaunchFromBottom = true
 
     private val emojiList = mutableListOf<Emoji>()
     private val board = Board(context)
@@ -286,6 +287,7 @@ class EmojiView @JvmOverloads constructor(
 
     private fun runParabolaAnim() {
         parabola.controlX = (parabola.beginX + parabola.endX / 2f).toInt()
+        parabola.controlY = if (isLaunchFromBottom) 0 else this.height
 
         parabolaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 500
@@ -361,7 +363,7 @@ class EmojiView @JvmOverloads constructor(
 
     private fun setupEmojiAnimFromEntryState() {
 
-        val offset = normalSize / 2
+        val offset = normalSize / 2 * if (isLaunchFromBottom) 1 else -1
 
         //  init value
         board.width = width.toFloat()
@@ -370,15 +372,14 @@ class EmojiView @JvmOverloads constructor(
         //  anim preparation
         board.beginHeight = (normalSize + spacing * 2).toFloat()
         board.endHeight = board.beginHeight
+
+        board.beginBottomY = (height - emojiPaddingBottom + spacing + offset).toFloat()
+        board.endBottomY = (height - emojiPaddingBottom + spacing).toFloat()
         board.currentBottomY = board.beginBottomY
 
         board.beginAlpha = 0
         board.endAlpha = 255
         board.currentAlpha = board.beginAlpha
-
-        board.beginBottomY = (height - emojiPaddingBottom + spacing + offset).toFloat()
-        board.endBottomY = (height - emojiPaddingBottom + spacing).toFloat()
-        board.currentBottomY = board.beginBottomY
 
         for (i in 0 until emojiList.size) {
             emojiList[i].beginSize = normalSize
@@ -394,7 +395,7 @@ class EmojiView @JvmOverloads constructor(
     }
 
     private fun setupEmojiAnimToExitState() {
-        val offset = normalSize / 2
+        val offset = normalSize / 2 * if (isLaunchFromBottom) 1 else -1
 
         //  anim preparation
         board.beginHeight = board.currentHeight
@@ -509,7 +510,7 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
-    private fun setupTitleBitmap(context: Context, emoji: Emoji, string:String) {
+    private fun setupTitleBitmap(context: Context, emoji: Emoji, string: String) {
         val titleView = LayoutInflater.from(context).inflate(R.layout.view_reaction_title, null)
 
         (titleView as TextView).text = string
