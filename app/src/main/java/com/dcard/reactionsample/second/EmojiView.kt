@@ -4,13 +4,16 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
+import android.widget.TextView
 import com.dcard.reactionsample.R
 import com.dcard.reactionsample.ReactionBaseLayout
 import com.dcard.reactionsample.ReactionConstants
@@ -64,16 +67,37 @@ class EmojiView @JvmOverloads constructor(
     private val emojiPaddingBottom = (dp * EMOJI_PADDING_BOTTOM).toInt()
 
     init {
-        emojiList.add(Emoji().apply { bitmap = bitmap1 })
-        emojiList.add(Emoji().apply { bitmap = bitmap2 })
-        emojiList.add(Emoji().apply { bitmap = bitmap3 })
-        emojiList.add(Emoji().apply { bitmap = bitmap4 })
-        emojiList.add(Emoji().apply { bitmap = bitmap5 })
 
         normalSize = (ReactionConstants.getNormalSize(reactionCount) * dp).toInt()
         biggerSize = (ReactionConstants.SIZE_LARGE * dp).toInt()
         smallerSize = (ReactionConstants.SIZE_SMALL * dp).toInt()
         spacing = (ReactionConstants.SPACING * dp).toInt()
+
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap1
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "笑")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap2
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "哼")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap3
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "白痴")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap4
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "...")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap5
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "哭")
+        })
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -483,6 +507,23 @@ class EmojiView @JvmOverloads constructor(
                 emojiList[hoverIndex].currentX = emojiList[hoverIndex + 1].currentX - emojiList[hoverIndex].currentSize - spacing
             }
         }
+    }
+
+    private fun setupTitleBitmap(context: Context, emoji: Emoji, string:String) {
+        val titleView = LayoutInflater.from(context).inflate(R.layout.view_reaction_title, null)
+
+        (titleView as TextView).text = string
+
+        val w = context.resources.getDimension(R.dimen.width_reaction_title)
+        val h = context.resources.getDimension(R.dimen.height_reaction_title)
+        emoji.titleWidth = w.toInt()
+        emoji.ratioWH = w / h
+        emoji.titleBitmap = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
+
+        val c = Canvas(emoji.titleBitmap!!)
+        titleView.layout(0, 0, w.toInt(), h.toInt())
+        titleView.paint.isAntiAlias = true
+        titleView.draw(c)
     }
 
 }

@@ -33,8 +33,8 @@ class ReactionBaseLayout @JvmOverloads constructor(
     var emojiView: EmojiView? = null
 
     init {
-        reactionViewWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
-        reactionViewHeight = context.resources.getDimensionPixelSize(R.dimen.reaction_height)
+        reactionViewWidth = context.resources.getDimensionPixelSize(R.dimen.width_reaction)
+        reactionViewHeight = context.resources.getDimensionPixelSize(R.dimen.height_reaction)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
