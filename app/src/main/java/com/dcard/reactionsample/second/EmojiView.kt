@@ -52,6 +52,10 @@ class EmojiView @JvmOverloads constructor(
     var smallerSize = 0
     var spacing = 0
 
+    var parabolaEndX = 0
+    var parabolaEndY = 0
+    var parabolaEndSize = 0
+
     var currentAlpha = 0
     var beginAlpha = 0
     var endAlpha = 0
@@ -234,10 +238,6 @@ class EmojiView @JvmOverloads constructor(
                 override fun onAnimationRepeat(animation: Animator?) {}
 
                 override fun onAnimationEnd(animation: Animator?) {
-                    parabola.endX = this@EmojiView.width
-                    parabola.endY = this@EmojiView.height
-                    parabola.endSize = smallerSize
-
                     state = STATE_INTERACTING
                 }
 
@@ -286,6 +286,9 @@ class EmojiView @JvmOverloads constructor(
     }
 
     private fun runParabolaAnim() {
+        parabola.endX = parabolaEndX
+        parabola.endY = parabolaEndY
+        parabola.endSize = smallerSize
         parabola.controlX = (parabola.beginX + parabola.endX / 2f).toInt()
         parabola.controlY = if (isLaunchFromBottom) 0 else this.height
 
@@ -299,6 +302,19 @@ class EmojiView @JvmOverloads constructor(
 
                 postInvalidate()
             }
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    parabola.currentSize = 0
+                    postInvalidate()
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+
+            })
         }.apply { start() }
     }
 
