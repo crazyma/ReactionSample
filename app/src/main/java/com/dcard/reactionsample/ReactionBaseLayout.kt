@@ -5,7 +5,6 @@ import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Color
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -33,8 +32,8 @@ class ReactionBaseLayout @JvmOverloads constructor(
     var emojiView: EmojiView? = null
 
     init {
-        reactionViewWidth = context.resources.getDimensionPixelSize(R.dimen.reaction_width)
-        reactionViewHeight = context.resources.getDimensionPixelSize(R.dimen.reaction_height)
+        reactionViewWidth = context.resources.getDimensionPixelSize(R.dimen.width_reaction)
+        reactionViewHeight = context.resources.getDimensionPixelSize(R.dimen.height_reaction)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -61,24 +60,35 @@ class ReactionBaseLayout @JvmOverloads constructor(
         return true
     }
 
-    fun showReactionView(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int) {
+    fun showReactionView(childX: Int, childY: Int, childWidth: Int, childHeight: Int) {
+
         if (emojiView != null) {
-            emojiView!!.layoutParams = createParams(touchX, touchY, childWidth, childHeight)
+            emojiView!!.layoutParams = createParams(childX, childY, childWidth, childHeight)
         } else {
             emojiView = EmojiView(context).apply {
-                this.setBackgroundColor(Color.GREEN)
+                //                this.setBackgroundColor(Color.GREEN)
                 id = R.id.id_root_view
-                alpha = 0f
                 ViewCompat.setElevation(this, 32f)
+                isLaunchFromBottom = isLaunchAnimationBeginFromBottom(childY)
             }
 
-            addView(emojiView, createParams(touchX, touchY, childWidth, childHeight))
+            addView(emojiView, createParams(childX, childY, childWidth, childHeight))
             customTouchEventListener = emojiView
         }
 
-        emojiView!!.post {
+        emojiView?.run {
+            isLaunchFromBottom = isLaunchAnimationBeginFromBottom(childY)
+            calculateParabolaEndPosition(childX, childY, childWidth, childHeight).also {
+                parabolaEndX = it[0]
+                parabolaEndY = it[1]
+            }
+            parabolaEndSize = 24
+        }
+
+        post {
             runEntryAnim()
         }
+
     }
 
     private fun runEntryAnim() {
@@ -123,38 +133,77 @@ class ReactionBaseLayout @JvmOverloads constructor(
     /**
      * Create proper LayoutParams to show the ReactionView in right position
      */
-    private fun createParams(touchX: Int, touchY: Int, childWidth: Int, childHeight: Int): FrameLayout.LayoutParams {
+    private fun createParams(childX: Int, childY: Int, childWidth: Int, childHeight: Int): FrameLayout.LayoutParams {
 
         reactionViewWidth = (ReactionConstants.getReactionViewSize(5) * dp).toInt()
 
         return FrameLayout.LayoutParams(reactionViewWidth, reactionViewHeight).apply {
             when {
-                touchY <= reactionTopBound && touchX < reactionRightBound -> {
+                childY <= reactionTopBound && childX < reactionRightBound -> {
                     //  left & top
-                    setMargins(touchX, touchY, 0, 0)
+                    setMargins(childX, childY, 0, 0)
                 }
 
-                touchY <= reactionTopBound && touchX >= reactionRightBound -> {
+                childY <= reactionTopBound && childX >= reactionRightBound -> {
                     //  right & top
-                    setMargins(touchX + childWidth - reactionViewWidth, touchY,
+                    setMargins(childX + childWidth - reactionViewWidth, childY,
                             0, 0)
                 }
 
-                touchY > reactionTopBound && touchX < reactionRightBound -> {
+                childY > reactionTopBound && childX < reactionRightBound -> {
                     //  left & bottom
-                    setMargins(touchX, touchY + childHeight - reactionViewHeight,
+                    setMargins(childX, childY + childHeight - reactionViewHeight,
                             0, 0)
                 }
 
-                touchY > reactionTopBound && touchX >= reactionRightBound -> {
+                childY > reactionTopBound && childX >= reactionRightBound -> {
                     //  right & bottom
                     setMargins(
-                            touchX + childWidth - reactionViewWidth,
-                            touchY + childHeight - reactionViewHeight, 0, 0)
+                            childX + childWidth - reactionViewWidth,
+                            childY + childHeight - reactionViewHeight, 0, 0)
                 }
             }
         }
     }
+
+    private fun calculateParabolaEndPosition(childX: Int, childY: Int, childWidth: Int, childHeight: Int): IntArray {
+        reactionViewWidth = (ReactionConstants.getReactionViewSize(5) * dp).toInt()
+
+        return when {
+            childY <= reactionTopBound && childX < reactionRightBound -> {
+                //  left & top
+                intArrayOf(0, 0)
+
+            }
+
+            childY <= reactionTopBound && childX >= reactionRightBound -> {
+                //  right & top
+                intArrayOf(reactionViewWidth - childWidth, 0)
+            }
+
+            childY > reactionTopBound && childX < reactionRightBound -> {
+                //  left & bottom
+                intArrayOf(0, reactionViewHeight - childHeight)
+            }
+
+            childY > reactionTopBound && childX >= reactionRightBound -> {
+                //  right & bottom
+                intArrayOf(reactionViewWidth - childWidth, reactionViewHeight - childHeight)
+            }
+
+            else -> {
+                intArrayOf(0, 0)
+            }
+        }
+    }
+
+    /**
+     * the launch animation of ReactionView could begin from the bottom of [EmojiView]
+     * if touch position is not too high
+     */
+    private fun isLaunchAnimationBeginFromBottom(touchY: Int) =
+            touchY > reactionTopBound
+
 
     fun hideReactionView() {
         if (emojiView == null)

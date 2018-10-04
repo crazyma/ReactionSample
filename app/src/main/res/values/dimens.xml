@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="reaction_width">160dp</dimen>
-    <dimen name="reaction_height">120dp</dimen>
+    <dimen name="width_reaction">160dp</dimen>
+    <dimen name="height_reaction">160dp</dimen>
+    <dimen name="width_reaction_title">48dp</dimen>
+    <dimen name="height_reaction_title">28dp</dimen>
 </resources>

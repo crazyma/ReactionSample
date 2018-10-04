@@ -4,13 +4,16 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
+import android.widget.TextView
 import com.dcard.reactionsample.R
 import com.dcard.reactionsample.ReactionBaseLayout
 import com.dcard.reactionsample.ReactionConstants
@@ -49,9 +52,14 @@ class EmojiView @JvmOverloads constructor(
     var smallerSize = 0
     var spacing = 0
 
+    var parabolaEndX = 0
+    var parabolaEndY = 0
+    var parabolaEndSize = 0
+
     var currentAlpha = 0
     var beginAlpha = 0
     var endAlpha = 0
+    var isLaunchFromBottom = true
 
     private val emojiList = mutableListOf<Emoji>()
     private val board = Board(context)
@@ -64,16 +72,37 @@ class EmojiView @JvmOverloads constructor(
     private val emojiPaddingBottom = (dp * EMOJI_PADDING_BOTTOM).toInt()
 
     init {
-        emojiList.add(Emoji().apply { bitmap = bitmap1 })
-        emojiList.add(Emoji().apply { bitmap = bitmap2 })
-        emojiList.add(Emoji().apply { bitmap = bitmap3 })
-        emojiList.add(Emoji().apply { bitmap = bitmap4 })
-        emojiList.add(Emoji().apply { bitmap = bitmap5 })
 
         normalSize = (ReactionConstants.getNormalSize(reactionCount) * dp).toInt()
         biggerSize = (ReactionConstants.SIZE_LARGE * dp).toInt()
         smallerSize = (ReactionConstants.SIZE_SMALL * dp).toInt()
         spacing = (ReactionConstants.SPACING * dp).toInt()
+
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap1
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "笑")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap2
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "哼")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap3
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "白痴")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap4
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "...")
+        })
+        emojiList.add(Emoji().apply {
+            bitmap = bitmap5
+            normalSize = this@EmojiView.normalSize
+            setupTitleBitmap(context, this, "哭")
+        })
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -209,10 +238,6 @@ class EmojiView @JvmOverloads constructor(
                 override fun onAnimationRepeat(animation: Animator?) {}
 
                 override fun onAnimationEnd(animation: Animator?) {
-                    parabola.endX = this@EmojiView.width
-                    parabola.endY = this@EmojiView.height
-                    parabola.endSize = smallerSize
-
                     state = STATE_INTERACTING
                 }
 
@@ -261,7 +286,11 @@ class EmojiView @JvmOverloads constructor(
     }
 
     private fun runParabolaAnim() {
+        parabola.endX = parabolaEndX
+        parabola.endY = parabolaEndY
+        parabola.endSize = smallerSize
         parabola.controlX = (parabola.beginX + parabola.endX / 2f).toInt()
+        parabola.controlY = if (isLaunchFromBottom) 0 else this.height
 
         parabolaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 500
@@ -273,6 +302,19 @@ class EmojiView @JvmOverloads constructor(
 
                 postInvalidate()
             }
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    parabola.currentSize = 0
+                    postInvalidate()
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+
+            })
         }.apply { start() }
     }
 
@@ -337,7 +379,7 @@ class EmojiView @JvmOverloads constructor(
 
     private fun setupEmojiAnimFromEntryState() {
 
-        val offset = normalSize / 2
+        val offset = normalSize / 2 * if (isLaunchFromBottom) 1 else -1
 
         //  init value
         board.width = width.toFloat()
@@ -346,15 +388,14 @@ class EmojiView @JvmOverloads constructor(
         //  anim preparation
         board.beginHeight = (normalSize + spacing * 2).toFloat()
         board.endHeight = board.beginHeight
+
+        board.beginBottomY = (height - emojiPaddingBottom + spacing + offset).toFloat()
+        board.endBottomY = (height - emojiPaddingBottom + spacing).toFloat()
         board.currentBottomY = board.beginBottomY
 
         board.beginAlpha = 0
         board.endAlpha = 255
         board.currentAlpha = board.beginAlpha
-
-        board.beginBottomY = (height - emojiPaddingBottom + spacing + offset).toFloat()
-        board.endBottomY = (height - emojiPaddingBottom + spacing).toFloat()
-        board.currentBottomY = board.beginBottomY
 
         for (i in 0 until emojiList.size) {
             emojiList[i].beginSize = normalSize
@@ -370,7 +411,7 @@ class EmojiView @JvmOverloads constructor(
     }
 
     private fun setupEmojiAnimToExitState() {
-        val offset = normalSize / 2
+        val offset = normalSize / 2 * if (isLaunchFromBottom) 1 else -1
 
         //  anim preparation
         board.beginHeight = board.currentHeight
@@ -483,6 +524,23 @@ class EmojiView @JvmOverloads constructor(
                 emojiList[hoverIndex].currentX = emojiList[hoverIndex + 1].currentX - emojiList[hoverIndex].currentSize - spacing
             }
         }
+    }
+
+    private fun setupTitleBitmap(context: Context, emoji: Emoji, string: String) {
+        val titleView = LayoutInflater.from(context).inflate(R.layout.view_reaction_title, null)
+
+        (titleView as TextView).text = string
+
+        val w = context.resources.getDimension(R.dimen.width_reaction_title)
+        val h = context.resources.getDimension(R.dimen.height_reaction_title)
+        emoji.titleWidth = w.toInt()
+        emoji.ratioWH = w / h
+        emoji.titleBitmap = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
+
+        val c = Canvas(emoji.titleBitmap!!)
+        titleView.layout(0, 0, w.toInt(), h.toInt())
+        titleView.paint.isAntiAlias = true
+        titleView.draw(c)
     }
 
 }
