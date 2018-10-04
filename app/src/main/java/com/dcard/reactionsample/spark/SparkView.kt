@@ -7,8 +7,11 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
+import com.dcard.reactionsample.ReactionConstants
 
 class SparkView @JvmOverloads constructor(
         context: Context,
@@ -29,20 +32,23 @@ class SparkView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
-    val iconSize: Int = (24 * dp).toInt()
+    val iconOriginalSize: Int = (24 * dp).toInt()
+    val iconShrinkSize: Int = (12 * dp).toInt()
+    var iconStartSize = 0
+    var iconEndSize = 0
 
 
     val dotStartDistance = 16f * dp
     val dotEndDistance = 24f * dp
     val dotStartRadius = 4f * dp
     val dotEndRadius = 0f
-    val circleStartRadius = iconSize / 4f
+    val circleStartRadius = iconOriginalSize / 4f
     val circleEndRadius = 18f * dp
-    val circleStartStrokeWidth = iconSize / 4f
+    val circleStartStrokeWidth = iconOriginalSize / 4f
     val circleEndStrokeWidth = 0f
 
     //  Current Variable
-    var iconCurrentSize = iconSize
+    var iconCurrentSize = iconOriginalSize
     var currentCircleRadius = 0f
     var currentCircleStrokeWidth = circleStartStrokeWidth
     var dotCurrentDistance = 0f
@@ -51,6 +57,7 @@ class SparkView @JvmOverloads constructor(
 
     var centerX = 0
     var centerY = 0
+    var isLongPressCancaled = false
 
     var iconBitmap: Bitmap? = null
         set(value) {
@@ -58,11 +65,90 @@ class SparkView @JvmOverloads constructor(
             postInvalidate()
         }
 
+    private var animator: ValueAnimator? = null
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         centerX = w / 2
         centerY = h / 2
     }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val x = event.x.toInt() - x.toInt()
+        val y = event.y.toInt() - y.toInt()
+
+        return when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                runShrinkAnim()
+                true
+            }
+            MotionEvent.ACTION_UP -> {
+
+                isLongPressCancaled = true
+                runStretchAnim()
+
+                true
+            }
+            else -> {
+                super.onTouchEvent(event)
+            }
+        }
+
+    }
+
+    override fun performClick(): Boolean {
+        runSpark()
+        return super.performClick().apply {
+            if (this)
+                runSpark()
+        }
+
+    }
+
+    private fun runShrinkAnim() {
+
+        setupShrinkAnim()
+        runIconAnim()
+    }
+
+    private fun runStretchAnim() {
+
+        setupStretchAnim()
+        runIconAnim()
+    }
+
+    private fun setupShrinkAnim() {
+        iconStartSize = iconCurrentSize
+        iconEndSize = iconShrinkSize
+    }
+
+    private fun setupStretchAnim() {
+        iconStartSize = iconCurrentSize
+        iconEndSize = iconOriginalSize
+    }
+
+    private fun calculateIconSize(fraction: Float) {
+        iconCurrentSize = calculateInterpolatedValue(iconStartSize, iconEndSize, fraction).toInt()
+    }
+
+    private fun runIconAnim() {
+        if (animator != null && animator!!.isRunning) {
+            animator!!.cancel()
+        }
+
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = ReactionConstants.DURATION_HOVER
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val fraction = it.animatedValue as Float
+
+                calculateIconSize(fraction)
+
+                postInvalidate()
+            }
+        }.apply { start() }
+    }
+
 
     fun runSpark() {
         ValueAnimator.ofFloat(0f, 1f).apply {
@@ -116,7 +202,7 @@ class SparkView @JvmOverloads constructor(
         }
 
         circlePaint.strokeWidth = currentCircleStrokeWidth
-        if(circlePaint.strokeWidth > 0f) {
+        if (circlePaint.strokeWidth > 0f) {
             canvas.drawCircle(centerX.toFloat(), centerY.toFloat(), currentCircleRadius, circlePaint)
         }
 
@@ -127,9 +213,13 @@ class SparkView @JvmOverloads constructor(
     }
 
     private fun calculateCircleRadius(fraction: Float) {
-        val v = when{
-            fraction <= .5f -> {fraction * 2f}
-            else -> {1f}
+        val v = when {
+            fraction <= .5f -> {
+                fraction * 2f
+            }
+            else -> {
+                1f
+            }
         }
 
         currentCircleRadius = calculateInterpolatedValue(circleStartRadius, circleEndRadius, v)
@@ -145,10 +235,14 @@ class SparkView @JvmOverloads constructor(
     }
 
     private fun calculateSmallerAppearance(fraction: Float) {
-        val v = when{
-            fraction <= .5f -> {fraction * 2f}
-            else -> {1f}
-         }
+        val v = when {
+            fraction <= .5f -> {
+                fraction * 2f
+            }
+            else -> {
+                1f
+            }
+        }
         smallerDotCurrentRadius = calculateInterpolatedValue(dotStartRadius, dotEndRadius, v)
     }
 
