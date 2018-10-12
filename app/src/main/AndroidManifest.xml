@@ -30,6 +30,9 @@
         <activity android:name=".glide.GlideActivity" >
 
         </activity>
+        <activity android:name=".spark.SparkActivity" >
+
+        </activity>
     </application>
 
 </manifest>
