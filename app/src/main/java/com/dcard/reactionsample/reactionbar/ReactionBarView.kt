@@ -21,12 +21,14 @@ class ReactionBarView @JvmOverloads constructor(
     private val list = mutableListOf<Bitmap>()
     private lateinit var rectF: RectF
     private val xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+    private var reactionAlpha = 0
 
     init {
         attrs?.let {
             context.obtainStyledAttributes(it, R.styleable.ReactionBarView, 0, 0).apply {
                 iconSize = getDimensionPixelSize(R.styleable.ReactionBarView_reactionSize, 48).toFloat()
                 offset = getDimensionPixelSize(R.styleable.ReactionBarView_strokeSize, 8).toFloat()
+                reactionAlpha = getInteger(R.styleable.ReactionBarView_reactionAlpha, 255)
                 maskSize = iconSize + offset
                 radius = iconSize / 2f
                 maskRadius = maskSize / 2f
@@ -70,8 +72,10 @@ class ReactionBarView @JvmOverloads constructor(
 
         //  setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         val layerID = canvas.saveLayer(rectF, paint)
+        canvas.saveLayerAlpha(rectF,reactionAlpha)
 
         var circleX: Float
+
         for (i in list.size - 1 downTo 0) {
             circleX = getCircleX(i)
 

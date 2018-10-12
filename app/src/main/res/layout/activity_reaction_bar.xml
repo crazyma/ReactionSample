@@ -14,6 +14,7 @@
         android:layout_marginTop="8dp"
         app:reactionSize="32dp"
         app:strokeSize="4dp"
+        app:reactionAlpha="100"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

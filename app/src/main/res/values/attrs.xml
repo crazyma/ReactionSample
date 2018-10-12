@@ -3,5 +3,6 @@
     <declare-styleable name="ReactionBarView">
         <attr name="reactionSize" format="dimension" />
         <attr name="strokeSize" format="dimension" />
+        <attr name="reactionAlpha" format="integer"/>
     </declare-styleable>
 </resources>
