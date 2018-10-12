@@ -18,10 +18,19 @@ class ReactionBarView @JvmOverloads constructor(
     private var radius = 0f
     private var maskRadius = 0f
     private var offset = 0f
-    private val list = mutableListOf<Bitmap>()
+    private var list: MutableList<Bitmap?>? = null
     private lateinit var rectF: RectF
     private val xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
     private var reactionAlpha = 0
+    var reactionCount = 0
+        set(value) {
+            field = value
+            list = when (value) {
+                0 -> null
+                else -> MutableList(value) { null }
+            }
+            calculateRectF(value)
+        }
 
     init {
         attrs?.let {
@@ -37,61 +46,56 @@ class ReactionBarView @JvmOverloads constructor(
             }
         }
 
-        calculateRectF()
+        calculateRectF(0)
     }
 
-    fun addBitmap(bitmap: Bitmap) {
-        list.add(bitmap)
-        calculateRectF()
-        requestLayout()
-        invalidate()
+    fun addBitmap(index: Int, bitmap: Bitmap?) {
+        if (reactionCount > 0 && index >= 0 && index < reactionCount) {
+            list?.add(index, bitmap)
+            requestLayout()
+            invalidate()
+        }
     }
 
-    fun addBitmap(l: List<Bitmap>) {
-        list.clear()
-        list.addAll(l)
-        calculateRectF()
-        requestLayout()
-        postInvalidate()
-    }
-
-    fun clearBitmap() {
-        list.clear()
-        calculateRectF()
+    fun refresh() {
         requestLayout()
         invalidate()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        setMeasuredDimension(getWidth(list.size).toInt(), iconSize.toInt())
+        setMeasuredDimension(getWidth(reactionCount).toInt(), iconSize.toInt())
     }
-
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        //  setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-        val layerID = canvas.saveLayer(rectF, paint)
-        canvas.saveLayerAlpha(rectF,reactionAlpha)
+        list?.run {
+            //  setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+            val layerID = canvas.saveLayer(rectF, paint)
+            canvas.saveLayerAlpha(rectF, reactionAlpha)
 
-        var circleX: Float
+            var circleX: Float
 
-        for (i in list.size - 1 downTo 0) {
-            circleX = getCircleX(i)
+            for (i in this.size - 1 downTo 0) {
+                circleX = getCircleX(i)
 
-            canvas.drawBitmap(list[i], null, getBitmapRecF(circleX), paint)
-            paint.xfermode = xfermode
-            if (i != 0) {
-                circleX = getCircleX(i - 1)
-                canvas.drawCircle(circleX, radius, maskRadius, paint)
-                paint.xfermode = null
+                this[i]?.run {
+                    canvas.drawBitmap(this, null, getBitmapRecF(circleX), paint)
+                }
+
+                paint.xfermode = xfermode
+                if (i != 0) {
+                    circleX = getCircleX(i - 1)
+                    canvas.drawCircle(circleX, radius, maskRadius, paint)
+                    paint.xfermode = null
+                }
             }
+            canvas.restoreToCount(layerID)
         }
-        canvas.restoreToCount(layerID)
     }
 
-    private fun calculateRectF() {
-        rectF = RectF(0f, 0f, getWidth(list.size), iconSize)
+    private fun calculateRectF(size: Int) {
+        rectF = RectF(0f, 0f, getWidth(size), iconSize)
     }
 
     private fun getCircleX(n: Int) =

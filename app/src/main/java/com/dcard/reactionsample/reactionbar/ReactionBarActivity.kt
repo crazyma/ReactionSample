@@ -15,12 +15,19 @@ class ReactionBarActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reaction_bar)
 
-        Handler().post {
-            val bitmap1 = BitmapFactory.decodeResource(resources, R.drawable.reaction_smile)
-            val bitmap2 = BitmapFactory.decodeResource(resources, R.drawable.reaction_chu)
-            val bitmap5 = BitmapFactory.decodeResource(resources, R.drawable.reaction_cry)
-            reactionBarView.addBitmap(listOf(bitmap1, bitmap2, bitmap5))
-        }
+        Handler().postDelayed({
+            val bitmap1 = BitmapFactory.decodeResource(resources, R.drawable.reaction_smile)!!
+            val bitmap2 = BitmapFactory.decodeResource(resources, R.drawable.reaction_chu)!!
+            val bitmap5 = BitmapFactory.decodeResource(resources, R.drawable.reaction_cry)!!
+            val list = listOf(bitmap1, bitmap2, bitmap5)
+            reactionBarView.reactionCount = list.size
+            for(i in 0 until list.size){
+                if(i%2 == 0)
+                    reactionBarView.addBitmap(i, list[i])
+            }
+            reactionBarView.refresh()
+
+        },3000)
 
     }
 
