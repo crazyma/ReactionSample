@@ -1,7 +1,6 @@
 package com.dcard.reactionsample.reactionbar
 
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
@@ -13,29 +12,30 @@ class ReactionBarView @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    companion object {
-        private const val ICON_SIZE = 48
-        private const val MASK_SIZE = 56
-        private const val OFFSET = 4
-    }
-
-    val bitmap1 = BitmapFactory.decodeResource(resources, R.drawable.reaction_smile)
-    val bitmap2 = BitmapFactory.decodeResource(resources, R.drawable.reaction_chu)
-    val bitmap5 = BitmapFactory.decodeResource(resources, R.drawable.reaction_cry)
-
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val dp = Resources.getSystem().displayMetrics.density
-    private val iconSize = ICON_SIZE * dp
-    private val maskSize = MASK_SIZE * dp
-    private val radius = iconSize / 2
-    private val maskRadius = maskSize / 2
-    private val offset = OFFSET * dp
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var iconSize = 0f
+    private var maskSize = 0f
+    private var radius = 0f
+    private var maskRadius = 0f
+    private var offset = 0f
     private val list = mutableListOf<Bitmap>()
-    private var rectF: RectF
+    private lateinit var rectF: RectF
     private val xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
 
     init {
-        rectF = RectF(0f, 0f, getWidth(list.size), iconSize)
+        attrs?.let {
+            context.obtainStyledAttributes(it, R.styleable.ReactionBarView, 0, 0).apply {
+                iconSize = getDimensionPixelSize(R.styleable.ReactionBarView_reactionSize, 48).toFloat()
+                offset = getDimensionPixelSize(R.styleable.ReactionBarView_strokeSize, 8).toFloat()
+                maskSize = iconSize + offset
+                radius = iconSize / 2f
+                maskRadius = maskSize / 2f
+
+                recycle()
+            }
+        }
+
+        calculateRectF()
     }
 
     fun addBitmap(bitmap: Bitmap) {
@@ -91,7 +91,7 @@ class ReactionBarView @JvmOverloads constructor(
     }
 
     private fun getCircleX(n: Int) =
-            (2 * n + 1) * radius - n * offset
+            ((2 * n + 1) * radius - n * offset)
 
     private fun getWidth(size: Int) =
             when (size) {
