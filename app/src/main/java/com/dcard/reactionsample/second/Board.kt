@@ -2,6 +2,7 @@ package com.dcard.reactionsample.second
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.support.v4.content.ContextCompat
@@ -23,6 +24,7 @@ class Board(context: Context) : InterpolatedCalculator() {
     var endAlpha = 0
 
     private lateinit var paint: Paint
+    private lateinit var shadowPaint: Paint
 
     init {
         initPaint(context)
@@ -30,9 +32,15 @@ class Board(context: Context) : InterpolatedCalculator() {
 
     fun drawBoard(canvas: Canvas) {
         val radius = currentHeight / 2
+
+        val shadowBoard = RectF(x, currentBottomY - currentHeight + 2, x + width, currentBottomY + 2)
+        shadowPaint.alpha = if (currentAlpha < 204) currentAlpha else 204
+        canvas.drawRoundRect(shadowBoard, radius, radius, shadowPaint)
+
         val board = RectF(x, currentBottomY - currentHeight, x + width, currentBottomY)
         paint.alpha = currentAlpha
         canvas.drawRoundRect(board, radius, radius, paint)
+
     }
 
     fun calculateCurrentBottomY(fraction: Float) {
@@ -52,7 +60,12 @@ class Board(context: Context) : InterpolatedCalculator() {
             isAntiAlias = true
             style = Paint.Style.FILL
             color = ContextCompat.getColor(context, android.R.color.white)
-            setShadowLayer(5.0f, 0.0f, 2.0f, -0x1000000)
+        }
+
+        shadowPaint = Paint().apply {
+            isAntiAlias = true
+            style = Paint.Style.FILL
+            color = ContextCompat.getColor(context, android.R.color.darker_gray)
         }
     }
 
